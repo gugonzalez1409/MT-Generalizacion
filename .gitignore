@@ -1,22 +1,9 @@
 respaldos/
 
+base models/log_dir/
+base models/tensorboard_log/
 
-DQN/BASE/log_dir/
-DQN/BASE/tensorboard_log/
-DQN/IMPALA/log_dir/
-DQN/IMPALA/tensorboard_log/
 
-ICMPPO/log_dir/
-ICMPPO/tensorboard_log/
-
-PPO/BASE/log_dir/
-PPO/BASE/tensorboard_log/
-
-PPO/EXPLORE-GO/log_dir/
-PPO/EXPLORE-GO/tensorboard_log/
-
-PPO/IMPALA/log_dir/
-PPO/IMPALA/tensorboard_log/
 
 RAINBOW/log_dir/
 RAINBOW/tensorboard_log/
