@@ -1,15 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 
 class ICMneural(nn.Module):
     def __init__(self, obs_shape, action_dim, feature_dim=256, lr=1e-3):
         super(ICMneural, self).__init__()
-        # channel, height, width (4,84,84)
-        c, _, _ = obs_shape
+        _, _, c = obs_shape
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        # nn feature extractor
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(c, 32, kernel_size=8, stride=4),
             nn.ReLU(),
@@ -55,20 +53,23 @@ class ICMneural(nn.Module):
 
         return state_, next_state_, pred_action, pred_next_state
 
+
     def get_intrinsic_reward(self, state, next_state, action):
-        # obtiene las predicciones y calcula la recompensa intrinseca como la diferencia entre las caracteristicas predichas y reales
+
         state_, next_state_, pred_action, pred_next_state = self.forward(state, next_state, action)
-        intrinsic_reward = self.loss_fn(pred_next_state, next_state_).detach().cpu().numpy()
 
         inv_loss = self.loss_inv(pred_action, action)
         forw_loss = self.loss_fn(pred_next_state, next_state_)
         total_loss = inv_loss + forw_loss
-
+        
+        intrinsic_reward = self.loss_fn(pred_next_state, next_state_).detach().cpu().numpy()
 
         return intrinsic_reward, total_loss
     
     def update(self, loss):
-        # actualiza el modelo periodicamente
+
+        # actualiza el modelo
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        torch.cuda.empty_cache()

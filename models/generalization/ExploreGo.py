@@ -13,6 +13,8 @@ class ExploreGo(gym.Wrapper):
         obs = self.env.reset()
         for i in range(random.randint(0, self.exploration_steps)):
             action = self.env.action_space.sample()
+            print("accion random: ", i)
+            print(action)
             obs, _, done, _ = self.env.step(action)
             if done:
                 obs = self.env.reset()

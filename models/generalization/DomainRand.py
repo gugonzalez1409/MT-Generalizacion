@@ -1,12 +1,5 @@
 import gym
-from nes_py.wrappers import JoypadSpace
-import time
 import random
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-
-env = gym.make('SuperMarioBros-1-2-v0')
-env = JoypadSpace(env, SIMPLE_MOVEMENT)
-
 
 """
 
@@ -60,7 +53,7 @@ def randomize_enemies_speed(env):
 
 
 class DomainRandom(gym.Wrapper):
-    def __init__(self, env, enemy_random_frames):
+    def __init__(self, env, enemy_random_frames = 50):
         super().__init__(env)
         self.current_step = 0
         self.enemy_random_frames = enemy_random_frames
@@ -78,5 +71,5 @@ class DomainRandom(gym.Wrapper):
         if(self.current_step % 30 == 0): randomize_speed(self.env)
         if(self.current_step % self.enemy_random_frames == 0): randomize_enemies_speed(self.env)
         
-        return obs, reward, done, info  
+        return obs, reward, done, info
 
