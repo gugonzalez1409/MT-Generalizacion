@@ -1,6 +1,8 @@
 import gym
+import numpy as np
 import multiprocessing
 from icm.ICM import ICM
+from typing import Callable
 from icm.reward import customReward
 from icm.ICMneural import ICMneural
 from stable_baselines3 import PPO, DQN
@@ -31,6 +33,11 @@ ALL_LEVEL_LIST = [
         "8-1", "8-2", "8-3", "8-4"
         ]
 
+"""
+Funciones de creacion de entorno SMB
+
+"""
+
 
 """Entorno para EvalCallback"""
 def eval_env():
@@ -38,6 +45,7 @@ def eval_env():
     env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
     env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
+    env = Monitor(env, filename=log_dir)
 
     return env
 
@@ -67,15 +75,20 @@ def vectorizedEnv(explore, random, custom, icm = False):
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
 
-        if(explore is not None): env = ExploreGo(env, explore)
-        if(random): env = DomainRandom(env, random)
-        if(custom): env = customReward(env)
+        if(explore is not None):
+            print("voy a explorar")
+            env = ExploreGo(env, explore)
+        if(random):
+            print("randomizando entorno")
+            env = DomainRandom(env, random)
+        if(custom): 
+            print("usando recompensa custom")
+            env = customReward(env)
 
         return env
     
     num_envs = multiprocessing.cpu_count() - 1
     env = VecMonitor(SubprocVecEnv([lambda: make_env(explore, random, custom) for _ in range(num_envs)]), filename=log_dir)
-    env = VecFrameStack(env, n_stack=4)
 
     if(icm):
         observation_space = env.observation_space.shape
@@ -86,16 +99,47 @@ def vectorizedEnv(explore, random, custom, icm = False):
     return env
 
 
+"""Funciones de Scheduler para LR"""
+
+def linear_schedule(initial_value: float ) -> Callable[[float], float]:
+    
+    def func(progress_remaining: float) -> float:
+
+        return progress_remaining * initial_value
+    
+
+    return func
+
+
+def schedule(initial_value: float, final_value: float) -> Callable[[float], float]:
+
+    def func(progress_remaining: float) -> float:
+        
+        cos_decay = 0.5 * (1 + np.cos(np.pi * (1 - progress_remaining)))
+        return final_value + (initial_value - final_value) * cos_decay
+    
+    return func
+
+
+"""
+Funciones de entrenamiento de agentes
+
+"""
+
+
 def trainPPO(explore, random, custom, vectorized):
 
     policy_kwargs = {}
 
     model = PPO(
         'CnnPolicy',
-        vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
+        learning_rate=schedule(2.5e-4, 1e-5),
+        env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
+        ent_coef=0.03,
         verbose=1,
-        tensorboard_log = tensorboard_log )
+        tensorboard_log = tensorboard_log
+        )
     
     callback = EvalCallback(eval_env=eval_env(), n_eval_episodes=100, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
     model.learn(total_timesteps=100e6, callback=callback)
@@ -109,30 +153,19 @@ def trainDQN(explore, random, custom, vectorized):
     policy_kwargs = {}
     
     model = DQN(
-        "CnnPolicy", 
-        vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
+        "CnnPolicy",
+        learning_rate = schedule(1e-4,1e-3),
+        env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs= policy_kwargs,
         buffer_size=100000,
+        learning_starts=50000,
+        exploration_final_eps= 0.05,
+        exploration_fraction=0.4,
         verbose=1,
-        tensorboard_log = tensorboard_log )
+        tensorboard_log = tensorboard_log
+        )
+    
     
     callback = EvalCallback(eval_env=eval_env(), n_eval_episodes=100, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
     model.learn(total_timesteps=100e6, callback=callback)
     model.save("DQN_mario")
-
-
-
-def test(model_name):
-## cambiar
-    model = PPO.load(model_name)
-    env = eval_env()
-    obs = env.reset()
-
-    for _ in range(10):
-        obs = env.reset()
-        while True:
-            env.render()
-            action, _ = model.predict(obs)
-            obs, _, done, _ = env.step(action)
-            if done:
-                obs = env.reset()

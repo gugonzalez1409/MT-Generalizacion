@@ -1,7 +1,6 @@
 respaldos/
 
-base models/log_dir/
-base models/tensorboard_log/
+models/statistics/
 
 prueba.py
 
