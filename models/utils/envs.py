@@ -76,7 +76,7 @@ def vectorizedEnv(explore, random, custom, icm = False):
 
         return env
     
-    num_envs = multiprocessing.cpu_count() - 1
+    num_envs = 11
     env = VecMonitor(SubprocVecEnv([lambda: make_env(explore, random, custom) for _ in range(num_envs)]), filename=log_dir)
     env = VecFrameStack(env, n_stack=4)
     env = LevelMonitor(env)

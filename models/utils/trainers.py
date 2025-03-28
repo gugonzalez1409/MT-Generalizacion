@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Callable
+from sb3_contrib import RecurrentPPO
 from stable_baselines3 import PPO, DQN
 from models.utils.envs import make_single_env, vectorizedEnv, eval_env
 from stable_baselines3.common.callbacks import EvalCallback
@@ -49,7 +50,7 @@ def trainPPO(explore, random, custom, vectorized):
         tensorboard_log = tensorboard_log
         )
     
-    callback = EvalCallback(eval_env=eval_env(), n_eval_episodes=100, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
+    callback = EvalCallback(eval_env=eval_env(), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
     model.learn(total_timesteps=100e6, callback=callback)
     model.save("PPO_mario")
 
@@ -74,6 +75,26 @@ def trainDQN(explore, random, custom, vectorized):
         )
     
     
-    callback = EvalCallback(eval_env=eval_env(), n_eval_episodes=100, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
-    model.learn(total_timesteps=100000, callback=callback) # 100k steps de prueba
+    callback = EvalCallback(eval_env=eval_env(), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
+    model.learn(total_timesteps=100e6, callback=callback)
     model.save("DQN_mario")
+
+
+
+def trainRecurrentPPO(explore, random, custom, vectorized):
+
+    policy_kwargs = {}
+
+    model = RecurrentPPO(
+        'CnnPolicy',
+        learning_rate = schedule(2.5e-4, 1e-5),
+        env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
+        policy_kwargs= policy_kwargs,
+        ent_coef=0.03,
+        verbose=1,
+        tensorboard_log = tensorboard_log
+    )
+
+    callback = EvalCallback(eval_env = eval_env(), n_eval_episodes=10, eval_freq=100000, log_path=log_dir, best_model_save_path=log_dir)
+    model.learn(total_timesteps=100e6, callback=callback)
+    model.save("RecurrentPPO_mario")

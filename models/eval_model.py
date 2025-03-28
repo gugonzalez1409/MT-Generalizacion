@@ -1,3 +1,5 @@
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import gym
 import csv
 import matplotlib.pyplot as plt
@@ -15,14 +17,14 @@ donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 """
 
 
-path = r'./statistics/log_dir/baseDQN/best_model.zip'
-model = DQN.load(path)
+path = r'./statistics/log_dir/basePPO/best_model.zip'
+model = PPO.load(path)
 
 levels = [f"SuperMarioBros-{w}-{s}-v0" for w in range(1,9) for s in range(1,5)]
 keys = [f"{w}-{s}" for w in range(1,9) for s in range(1,5)]
 
 
-csv_filename = 'DQNevaluation.csv'
+csv_filename = 'PPOevaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)
