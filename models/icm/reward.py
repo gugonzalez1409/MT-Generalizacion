@@ -10,26 +10,25 @@ class customReward(gym.RewardWrapper):
         self.status = 'small'
         self.coins = 0
 
-# recompensa por obtener puntos
     def step(self, action):
         #self.env.render()
         state, reward, done, info = self.env.step(action)
-        #eward += (info['score'] - self.score)
+        #reward += (info['score'] - self.score)
         #self.score = info['score']
 
         if(self.coins < info['coins']):
             self.coins = info['coins']
-            reward += 0.5
+            reward += 1.0
 
-        # premiar el conseguir champiñon o flor de fuego
+        # premiar el conseguir powerups
         if(self.status != info['status']):
             self.status = info['status']
-            reward += 1.5
+            reward += 2.0
 
-        # castigar el ser golpeado
+        # castigar perder el powerup
         elif(self.status == 'tall' and info['status'] == 'small'):
             self.status = info['status']
-            reward -= 1.5
+            reward -= 2.0
 
         # premiar completar nivel
         if done:
@@ -40,4 +39,4 @@ class customReward(gym.RewardWrapper):
             else:
                 reward -= 30.0
 
-        return state, reward / 15, done, info
+        return state, reward / 10, done, info

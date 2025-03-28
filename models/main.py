@@ -1,7 +1,7 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import argparse
-from trainers import trainDQN, trainPPO
+from models.utils.trainers import trainDQN, trainPPO
 
 
 """

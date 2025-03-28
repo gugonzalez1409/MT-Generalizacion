@@ -1,8 +1,4 @@
-respaldos/
 
 models/statistics/
 
 prueba.py
-
-RAINBOW/log_dir/
-RAINBOW/tensorboard_log/
