@@ -1,5 +1,4 @@
 import gym
-import multiprocessing
 from ..icm.ICM import ICM
 from ..icm.reward import customReward
 from ..icm.ICMneural import ICMneural
@@ -7,46 +6,48 @@ from .level_monitor import LevelMonitor
 from nes_py.wrappers import JoypadSpace
 from ..generalization.ExploreGo import ExploreGo
 from ..generalization.DomainRand import DomainRandom
-from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.vec_env import VecMonitor
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import AtariWrapper
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor
 
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
 
-# No está nivel 7-4
+# No está nivel 7-4, 4-4, ni 8-4
 
 ALL_LEVEL_LIST = [
         "1-1", "1-2", "1-3", "1-4",
         "2-1", "2-2", "2-3", "2-4",
         "3-1", "3-2", "3-3", "3-4",
-        "4-1", "4-2", "4-3", "4-4",
-        "5-1", "5-2", "5-3", "5-4",
-        "6-1", "6-2", "6-3", "6-4",
-        "7-1", "7-2", "7-3", "8-1", 
-        "8-2", "8-3", "8-4" ]
+        "4-1", "4-2", "4-3", "5-1", 
+        "5-2", "5-3", "5-4", "6-1", 
+        "6-2", "6-3", "6-4", "7-1", 
+        "7-2", "7-3", "8-1", "8-2", 
+        "8-3" ]
+
 
 """
 Funciones de creacion de entorno SMB
 
 """
 
-
-"""Entorno para EvalCallback"""
-def eval_env():
+def eval_env(custom):
+    """Entorno para EvalCallback"""
 
     env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
+    if custom: env = customReward(env)
     env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
-    env = Monitor(env, filename=log_dir)
+    env = DummyVecEnv([lambda: env])
+    env = VecFrameStack(env, n_stack=4, channels_order='last')
+    env = VecMonitor(env)
 
     return env
 
 
-"""Entorno simple para SMB"""
+
 def make_single_env(explore, random, custom):
+    """Entorno simple para SMB"""
 
     env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
@@ -56,8 +57,9 @@ def make_single_env(explore, random, custom):
     if(random): env = DomainRandom(env, random)
     if(custom): env = customReward(env)
 
-    env = Monitor(env, filename=log_dir)
-    # entorno simple no compatible con wrappers de framestack
+    env = DummyVecEnv([lambda: env])
+    env = VecFrameStack(env, n_stack=4, channels_order='last')
+    env = VecMonitor(env, filename=log_dir)
     return env
 
 
@@ -78,7 +80,7 @@ def vectorizedEnv(explore, random, custom, icm = False):
     
     num_envs = 11
     env = VecMonitor(SubprocVecEnv([lambda: make_env(explore, random, custom) for _ in range(num_envs)]), filename=log_dir)
-    env = VecFrameStack(env, n_stack=4)
+    env = VecFrameStack(env, n_stack=4, channels_order='last')
     env = LevelMonitor(env)
 
     if(icm):

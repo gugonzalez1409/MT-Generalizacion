@@ -1,13 +1,15 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD'] = '1'
 import gym
 import csv
 import matplotlib.pyplot as plt
+from icm.reward import customReward
 from stable_baselines3 import PPO, DQN
 from nes_py.wrappers import JoypadSpace
-from icm.reward import customReward
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import AtariWrapper
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv, VecMonitor, VecVideoRecorder
 
 """
 Entorno para evaluacion de modelo en SMB
@@ -16,8 +18,7 @@ donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
 """
 
-
-path = r'./statistics/log_dir/basePPO/best_model.zip'
+path = r'./statistics/log_dir/PPO_mario.zip'
 model = PPO.load(path)
 
 levels = [f"SuperMarioBros-{w}-{s}-v0" for w in range(1,9) for s in range(1,5)]
@@ -33,46 +34,53 @@ with open(csv_filename, 'w') as file:
     results = {}
     for i, level in enumerate(levels):
 
-        print(f"Evaluando en {level}")
+        # excluir niveles 4-4 7-4 8-4
+        if level in ['SuperMarioBros-4-4-v0', 'SuperMarioBros-7-4-v0', 'SuperMarioBros-8-4-v0']:
+            continue
 
         env = gym.make(level)
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         env = customReward(env)
         env = AtariWrapper(env= env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward=False)
+        env = DummyVecEnv([lambda: env])
+        env = VecFrameStack(env, n_stack=4, channels_order='last')
+        env = VecVideoRecorder(env, f'statistics/videos/{level}', record_video_trigger=lambda x: True, name_prefix=f'PPO{level}', video_length=20000)
+        env = VecMonitor(env)
 
         total_rewards = []
         completition_rates = []
         max_completion = 0
         lvl_length = 3000 # valor aproximado, en caso de nunca llegar al final
 
+        try:
+            for j in range(10):
 
-        for j in range(10):
+                obs = env.reset()
+                total_reward = 0
+                max_x_pos = 0
 
-            obs = env.reset()
-            total_reward = 0
-            max_x_pos = 0
+                while True:
 
-            while True:
+                    action, _ = model.predict(obs, deterministic=True)
+                    obs, reward, done, info = env.step(action)
+                    total_reward += reward[0]
+                    max_x_pos = max(max_x_pos, info[0]['x_pos'])
 
-                env.render()
-                action, _ = model.predict(obs, deterministic=True)
-                obs, reward, done, info = env.step(action)
-                total_reward += reward
-                max_x_pos = max(max_x_pos, info['x_pos'])
+                    if done[0]:
+                        if info[0]['flag_get'] == True:
+                            lvl_length = info[0]['x_pos']
+                            print("x_pos final: ", lvl_length)
 
-                if done:
-                    if info['flag_get'] == True:
-                        lvl_length = info['x_pos']
-                        print("x_pos final: ", lvl_length)
-                    break
+                        break
 
 
-            total_rewards.append(total_reward)
-            completition_rate = (max_x_pos / lvl_length) * 100
-            completition_rates.append(completition_rate)
-            max_completion = max(max_completion, completition_rate)
+                total_rewards.append(total_reward)
+                completition_rate = (max_x_pos / lvl_length) * 100
+                completition_rates.append(completition_rate)
+                max_completion = max(max_completion, completition_rate)
 
-        env.close()
+        finally:
+            env.close()
 
 
         avg_reward = sum(total_rewards) / len(total_rewards)
