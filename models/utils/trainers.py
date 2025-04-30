@@ -43,7 +43,7 @@ def trainDQN(explore, random, custom, vectorized):
     policy_kwargs = {}
     
     model = DQN(
-        "CnnPolicy",
+        'CnnPolicy',
         learning_rate = 1e-3,
         env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs= policy_kwargs,
