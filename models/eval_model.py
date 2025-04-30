@@ -1,5 +1,6 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD'] = '1'
 import gym
 import csv
 import matplotlib.pyplot as plt
@@ -59,7 +60,7 @@ with open(csv_filename, 'w') as file:
                 max_x_pos = 0
 
                 while True:
-                    #env.render()
+
                     action, _ = model.predict(obs, deterministic=True)
                     obs, reward, done, info = env.step(action)
                     total_reward += reward[0]

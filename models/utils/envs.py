@@ -1,7 +1,6 @@
 import gym
 from ..icm.ICM import ICM
 from ..icm.reward import customReward
-from .env_render import EnvRender
 from ..icm.ICMneural import ICMneural
 from .level_monitor import LevelMonitor
 from nes_py.wrappers import JoypadSpace
@@ -61,7 +60,6 @@ def make_single_env(explore, random, custom):
     env = DummyVecEnv([lambda: env])
     env = VecFrameStack(env, n_stack=4, channels_order='last')
     env = VecMonitor(env, filename=log_dir)
-    
     return env
 
 
@@ -72,7 +70,6 @@ def vectorizedEnv(explore, random, custom, icm = False):
 
         env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
-        #env = EnvRender(env)
         env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
 
         if(explore is not None): env = ExploreGo(env, explore)
@@ -83,8 +80,8 @@ def vectorizedEnv(explore, random, custom, icm = False):
     
     num_envs = 11
     env = VecMonitor(SubprocVecEnv([lambda: make_env(explore, random, custom) for _ in range(num_envs)]), filename=log_dir)
-    env = LevelMonitor(env)
     env = VecFrameStack(env, n_stack=4, channels_order='last')
+    env = LevelMonitor(env)
 
     if(icm):
         observation_space = env.observation_space.shape
