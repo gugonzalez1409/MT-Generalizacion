@@ -1,13 +1,13 @@
 import gym
 from ..icm.ICM import ICM
-from ..icm.reward import customReward
+from .reward import customReward
 from ..icm.ICMneural import ICMneural
 from .level_monitor import LevelMonitor
 from nes_py.wrappers import JoypadSpace
 from ..generalization.ExploreGo import ExploreGo
 from ..generalization.DomainRand import DomainRandom
-from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import AtariWrapper
+from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor
 
 tensorboard_log = r'./models/statistics/tensorboard_log/'

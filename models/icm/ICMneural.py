@@ -2,11 +2,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
+## hacer que el modelo retorne acciones discretas para Mario Bros
+
+
 class ICMneural(nn.Module):
     def __init__(self, obs_shape, action_dim, feature_dim=256, lr=1e-3):
         super(ICMneural, self).__init__()
         _, _, c = obs_shape
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(c, 32, kernel_size=8, stride=4),
@@ -34,9 +37,11 @@ class ICMneural(nn.Module):
             nn.Linear(256, feature_dim)
         )
 
-        # optimizador Adam y funcion de perdida MSE
+        # optimizer y losses
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        # loss para modelo directo
         self.loss_fn = nn.MSELoss()
+        # loss para modelo inverso
         self.loss_inv = nn.CrossEntropyLoss()
 
     def forward(self, state, next_state, action):
@@ -67,9 +72,6 @@ class ICMneural(nn.Module):
         return intrinsic_reward, total_loss
     
     def update(self, loss):
-
-        # actualiza el modelo
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        torch.cuda.empty_cache()

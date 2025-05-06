@@ -2,7 +2,7 @@ import gym
 import gym.spaces
 import torch as th
 from torch import nn
-from NoisyLinear import NoisyLinear
+from .NoisyLinear import NoisyLinear
 from sb3_contrib.qrdqn.policies import QRDQNPolicy
 from typing import Any, Dict, List, Optional, Type
 from stable_baselines3.common.policies import BasePolicy

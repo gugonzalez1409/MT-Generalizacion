@@ -4,7 +4,7 @@ os.environ['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD'] = '1'
 import gym
 import csv
 import matplotlib.pyplot as plt
-from icm.reward import customReward
+from utils.reward import customReward
 from stable_baselines3 import PPO, DQN
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT

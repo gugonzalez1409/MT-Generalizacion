@@ -1,9 +1,9 @@
 import gym
 import torch as th
 import numpy as np
-from per import PER
+from .per import PER
 from sb3_contrib import QRDQN
-from policies import RainbowPolicy
+from .policies import RainbowPolicy
 from sb3_contrib.common.utils import quantile_huber_loss
 from stable_baselines3.common.buffers import ReplayBuffer
 from typing import Any, Dict, Optional, Type, Union
