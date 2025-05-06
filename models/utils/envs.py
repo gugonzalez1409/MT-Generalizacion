@@ -13,7 +13,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, Dummy
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
 
-# No está nivel 7-4, 4-4, ni 8-4
+# No incluye 7-4, 4-4, ni 8-4
 
 ALL_LEVEL_LIST = [
         "1-1", "1-2", "1-3", "1-4",
@@ -26,6 +26,19 @@ ALL_LEVEL_LIST = [
         "8-3" ]
 
 
+TRAINING_LEVEL_LIST = [
+        "1-3", "2-1", "3-2", "3-4", 
+        "4-2", "4-3", "5-3", "5-4", 
+        "6-2", "6-4", "7-1", "7-2", 
+        "7-3", "8-1", "8-3" ]
+
+EVALUATION_LEVEL_LIST = [
+        "1-1", "1-2", "1-4", "2-2",
+        "2-3", "2-4", "3-1", "3-3", 
+        "4-1", "5-1", "5-2", "6-1",
+        "6-3", "8-2" ]
+
+
 """
 Funciones de creacion de entorno SMB
 
@@ -34,7 +47,7 @@ Funciones de creacion de entorno SMB
 def eval_env(custom):
     """Entorno para EvalCallback"""
 
-    env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
+    env = gym.make('SuperMarioBrosRandomStages-v0', stages= EVALUATION_LEVEL_LIST)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
     if custom: env = customReward(env)
     env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
@@ -49,7 +62,7 @@ def eval_env(custom):
 def make_single_env(explore, random, custom):
     """Entorno simple para SMB"""
 
-    env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
+    env = gym.make('SuperMarioBrosRandomStages-v0', stages= TRAINING_LEVEL_LIST)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
     env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
 
@@ -68,7 +81,7 @@ def vectorizedEnv(explore, random, custom, icm = False):
 
     def make_env(explore, random, custom):
 
-        env = gym.make('SuperMarioBrosRandomStages-v0', stages= ALL_LEVEL_LIST)
+        env = gym.make('SuperMarioBrosRandomStages-v0', stages= TRAINING_LEVEL_LIST)
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
 
