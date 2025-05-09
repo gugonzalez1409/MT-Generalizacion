@@ -16,8 +16,8 @@ class ExploreGo(gym.Wrapper):
         for i in range(random.randint(0, self.exploration_steps)):
 
             if self.explorer is not None:
-                #print("obs shape:", obs.shape)
-                action = self.explorer(obs)
+                print("seleccionando accion en ICM")
+                action = self.explorer.select_action(obs)
 
             else:
                 #print("obs shape:", obs.shape) # 84,84,1

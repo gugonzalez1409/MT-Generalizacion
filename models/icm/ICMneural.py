@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
 
 ## hacer que el modelo retorne acciones discretas para Mario Bros
@@ -10,6 +11,11 @@ class ICMneural(nn.Module):
     def __init__(self, obs_shape, action_dim, feature_dim=256, lr=1e-3):
         super(ICMneural, self).__init__()
         _, _, c = obs_shape
+        self.action_space = action_dim
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        #print("obs_shape: ", obs_shape)
+        #print("action_dim: ", action_dim)
 
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(c, 32, kernel_size=8, stride=4),
@@ -70,6 +76,37 @@ class ICMneural(nn.Module):
         intrinsic_reward = self.loss_fn(pred_next_state, next_state_).detach().cpu().numpy()
 
         return intrinsic_reward, total_loss
+    
+    def select_action(self, obs):
+
+        print("obs shape:", obs.shape)
+
+        obs = torch.FloatTensor(obs).to(self.device).unsqueeze(0) / 255.0
+        obs = obs.permute(0, 3, 1, 2)
+
+        # extraer caracteristicas
+        _obs = self.feature_extractor(obs)
+
+        max_curiosity = -float("inf")
+        best_action = None
+
+        for a in range(self.action_space):
+            
+            action_tensor = torch.tensor([a], device=self.device)
+            action_onehot = F.one_hot(action_tensor, num_classes=self.action_space).float()
+
+            forward_input = torch.cat([_obs, action_onehot], dim=1)
+            phi_next_pred = self.forward_model(forward_input)
+
+            curiosity = F.mse_loss(phi_next_pred, _obs, reduction='sum').item()
+
+            if curiosity > max_curiosity:
+                max_curiosity = curiosity
+                best_action = a
+                
+        print("accion: ", best_action)
+
+        return best_action
     
     def update(self, loss):
         self.optimizer.zero_grad()
