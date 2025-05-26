@@ -41,7 +41,8 @@ class customReward(RewardWrapper):
         # muchos steps estancado, premiar mas
         else:
 
-            if self.stuck_time > 0:
+            if self.stuck_time > 30:
+                
                 reward += 2.0
             
             else:

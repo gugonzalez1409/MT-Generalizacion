@@ -17,7 +17,7 @@ Funciones de entrenamiento de agentes
 
 """
 
-
+# obtenido de docs de sb3
 def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
     def func(progress_remaining: float) -> float:
@@ -34,7 +34,7 @@ def trainPPO(explore, random, custom, vectorized):
 
     model = PPO(
         'CnnPolicy',
-        learning_rate=2.5e-4,
+        learning_rate=linear_schedule(2.5e-4),
         env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
         ent_coef=0.03,
@@ -56,7 +56,7 @@ def trainDQN(explore, random, custom, vectorized):
     
     model = DQN(
         "CnnPolicy",
-        learning_rate = 1e-3,
+        learning_rate = linear_schedule(1e-3),
         env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs= policy_kwargs,
         buffer_size=100000,
@@ -79,8 +79,8 @@ def trainRecurrentPPO(explore, random, custom, vectorized):
     policy_kwargs = {}
 
     model = RecurrentPPO(
-        'CnnPolicy',
-        learning_rate = 2.5e-4,
+        'CnnLstmPolicy',
+        learning_rate = linear_schedule(2.5e-4),
         env = vectorizedEnv(explore, random, custom) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs= policy_kwargs,
         ent_coef=0.03,

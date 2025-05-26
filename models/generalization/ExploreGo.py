@@ -13,23 +13,32 @@ class ExploreGo(gym.Wrapper):
     def reset(self):
 
         obs = self.env.reset()
-        for i in range(random.randint(0, self.exploration_steps)):
+        for _ in range(random.randint(0, self.exploration_steps)):
 
             if self.explorer is not None:
-                print("seleccionando accion en ICM")
+
                 action = self.explorer.select_action(obs)
 
             else:
-                #print("obs shape:", obs.shape) # 84,84,1
+
                 action = self.env.action_space.sample()
 
-            #print("accion explore-go: ",action)
 
-            obs, reward, done, info = self.env.step(action)
+            next_obs, reward, done, info = self.env.step(action)
+
+
+            if self.explorer is not None:
+
+                int_reward, loss = self.explorer.get_intrinsic_reward(obs, next_obs, action)
+                self.explorer.update(loss)
 
             if done:
 
                 obs = self.env.reset()
 
+            else:
+
+                obs = next_obs
+
         return obs
-    
+

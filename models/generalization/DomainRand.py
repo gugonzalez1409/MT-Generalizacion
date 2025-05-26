@@ -8,7 +8,7 @@ especificamente para Super Mario Bros
 
 """
 
-# lista de enemigos a no randomizar
+# lista de enemigos a no randomizar, posible crash del juego
 not_use_list = [0x0D, 0x011, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x3C, 0x3B, 0x3A, 0x38, 0x37, 0x36, 0x35, 0x34, 0x32, 0x31, 0x30, 0x2F, 0x2E, 
                 0x2D, 0x2B, 0x2A, 0x28, 0x29, 0x24, 0x25, 0x26, 0x27, 0x1F, 0x1B, 0X1C, 0X1D, 0X1E, 0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x2C]
 
@@ -118,6 +118,7 @@ class DomainRandom(gym.Wrapper):
 
         if(self.current_step % 30 == 0): randomize_speed(self.env)
         if(self.current_step % self.enemy_random_frames == 0): randomize_enemies_speed(self.env)
+        if(self.current_step % 100 == 0): randomize_enemies(self.env)
         
         return obs, reward, done, info
 

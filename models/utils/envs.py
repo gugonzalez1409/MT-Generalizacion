@@ -1,7 +1,7 @@
 import gym
-from ..icm.ICM import ICM
+from ..icm.ICM import ICMneural
 from .reward import customReward
-from ..icm.ICMneural import ICMneural
+from ..icm.ICM import ICMneural
 from .level_monitor import LevelMonitor
 from nes_py.wrappers import JoypadSpace
 from ..generalization.ExploreGo import ExploreGo
@@ -13,7 +13,6 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, Dummy
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
 
-# No incluye 7-4, 4-4, ni 8-4
 
 ALL_LEVEL_LIST = [
         "1-1", "1-2", "1-3", "1-4",
@@ -95,11 +94,5 @@ def vectorizedEnv(explore, random, custom, icm = False):
     env = VecMonitor(SubprocVecEnv([lambda: make_env(explore, random, custom) for _ in range(num_envs)]), filename=log_dir)
     env = VecFrameStack(env, n_stack=4, channels_order='last')
     env = LevelMonitor(env)
-
-    if(icm):
-        observation_space = env.observation_space.shape
-        action_space = env.action_space.n
-        icm_model = ICMneural(observation_space, action_space)
-        env = ICM(env, icm_model, update_interval=128)
 
     return env

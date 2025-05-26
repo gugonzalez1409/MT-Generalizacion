@@ -42,7 +42,7 @@ class Worker(object):
             
             
             obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
-            screen = cv2.resize(obs, (28, 40)) # obs de 28x40
+            screen = cv2.resize(obs, (28, 40)) # obs de 28,40
             screen = np.ndarray.flatten(screen)
             #self.env.render()
             output = net.activate(screen)
