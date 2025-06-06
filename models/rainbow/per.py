@@ -32,26 +32,30 @@ class PER(ReplayBuffer):
             buffer_size, observation_space, action_space, device, n_envs=n_envs
         )
 
+        # scheduler para beta
         self.beta_schedule = get_linear_fn(beta_initial, beta_final, beta_end_fraction)
         self.beta = beta_initial
 
+        # valor de n_step learning y factor de descuento
         self.n_step = n_step
         self.gamma = gamma
 
+        # arreglos que contienen los valores de las transiciones
         self.observations = np.full(self.buffer_size, None)
         self.next_observations = np.full(self.buffer_size, None)
-
         self.actions = torch.zeros((self.buffer_size, self.action_dim), dtype=torch.int64, device=self.device)
-
         self.rewards = torch.zeros((self.buffer_size,), dtype=torch.float32, device=self.device)
         self.dones = torch.zeros((self.buffer_size,), dtype=torch.float32, device=self.device)
 
+        # guarda los valores de las transiciones n-step
         self.n_step_buffers = [deque(maxlen=self.n_step + 1) for j in range(self.n_envs)]
 
+        # arreglos para las prioridades maximas y minimas
         self.priority_sum = np.full((2 * self.buffer_size), 0.0, dtype=np.float64)
         self.priority_min = np.full((2 * self.buffer_size), np.inf, dtype=np.float64)
 
-        self.max_priority = 1.0  # initial priority of new transitions
+        # prioridad inicial
+        self.max_priority = 1.0
 
     def add(
         self,
@@ -62,21 +66,18 @@ class PER(ReplayBuffer):
         done: np.ndarray,
         infos: List[Dict[str, Any]],
     ) -> None:
-        # Reshape needed when using multiple envs with discrete observations
-        # as numpy cannot broadcast (n_discrete,) to (n_discrete, 1)
+        
+        # SB3
         if isinstance(self.observation_space, spaces.Discrete):
             obs = obs.reshape((self.n_envs, *self.obs_shape))
             next_obs = next_obs.reshape((self.n_envs, *self.obs_shape))
 
-        # Reshape to handle multi-dim and discrete action spaces, see GH #970 #1392
         action = action.reshape((self.n_envs, self.action_dim))
 
         for queue, o, a, r, d in zip(self.n_step_buffers, obs, action, reward, done):
             queue.append((o, a, r, d))
 
-            # n-step transition can't start on a terminal state
             if len(queue) == self.n_step + 1 and not queue[0][3]:
-                # get first and last states of the n_step stransition
                 o, a, r, _ = queue[0]
                 no, _, _, d = queue[self.n_step]
 
@@ -91,12 +92,11 @@ class PER(ReplayBuffer):
                 self.observations[self.pos] = o
                 self.next_observations[self.pos] = no
 
-                # store scalar data
                 self.actions[self.pos] = self.to_torch(a)
                 self.rewards[self.pos] = self.to_torch(r)
                 self.dones[self.pos] = self.to_torch(d)
 
-                # set initial priority
+                # dar prioridades iniciales a las transiciones
                 self._set_priority_min(self.pos, sqrt(self.max_priority))
                 self._set_priority_sum(self.pos, sqrt(self.max_priority))
 

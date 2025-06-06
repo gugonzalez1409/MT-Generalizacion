@@ -40,19 +40,15 @@ class customReward(RewardWrapper):
         # en caso de avanzar, premiar, en caso de avanzar luego de
         # muchos steps estancado, premiar mas
         else:
-
             if self.stuck_time > 30:
-                
                 reward += 2.0
             
             else:
-
                 reward += 1.0
                 
             # reiniciar contador de estancado
             self.stuck_time = 0
 
-        
         # castigar perder el powerup
         if(self.status in ['tall', 'fireball'] and info['status'] == 'small'):
             reward -= 2.0
@@ -61,13 +57,7 @@ class customReward(RewardWrapper):
 
         # premiar completar nivel
         if done:
-
             if info['flag_get']:
                 reward += 30.0
-                
-        # castigo al morir o time over
-            else:
-
-                reward -= 30.0
 
         return state, reward / 10, done, info
