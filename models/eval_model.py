@@ -4,10 +4,11 @@ import gym
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.reward import customReward
+from .utils.reward import customReward
 from stable_baselines3 import PPO, DQN
 from sb3_contrib import QRDQN, RecurrentPPO
 from nes_py.wrappers import JoypadSpace
+from .utils.envs import EVALUATION_LEVEL_LIST
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import AtariWrapper
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv, VecMonitor, VecVideoRecorder
@@ -18,13 +19,6 @@ el agente tiene 10 intentos a cada nivel del juego
 donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
 """
-
-EVALUATION_LEVEL_LIST = [
-        "1-1", "1-3", "2-2", "2-4", 
-        "3-1", "3-3", "4-2", "5-2", 
-        "5-3", "6-1", "6-3", "7-2",              
-        "8-1", "8-3"        
-]
 
 
 model_name = {
@@ -130,7 +124,7 @@ if __name__ == "__main__":
     output_dir = 'statistics/evaluations'
     os.makedirs(output_dir, exist_ok=True)
     algo_name = 'PPO'
-    model_path = f'./statistics/log_dir/{algo_name}_mario.zip'
+    model_path = f'./models/statistics/log_dir/{algo_name}_mario'
     csv_filename = os.path.join(output_dir, f'{algo_name}_evaluation.csv')
     video_prefix = os.path.join(output_dir, algo_name)
     evaluate_model(algo_name, model_path, csv_filename, video_prefix)
