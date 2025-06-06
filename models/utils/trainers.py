@@ -56,7 +56,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         )
     
     callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
-    model.learn(total_timesteps=50e6, callback=callback)
+    model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = 'PPO'
 
@@ -100,7 +100,7 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
         )
     
     callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
-    model.learn(total_timesteps=50e6, callback=callback)
+    model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = "DQN"
 
@@ -143,7 +143,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
     )
 
     callback = EvalCallback(eval_env = eval_env(custom), n_eval_episodes=10, eval_freq=100000, log_path=log_dir, best_model_save_path=log_dir)
-    model.learn(total_timesteps=50e6, callback=callback)
+    model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = "RPPO"
 
@@ -208,7 +208,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
     )
 
     callback = EvalCallback(eval_env = eval_env(custom), n_eval_episodes=10, eval_freq=100000, log_path=log_dir, best_model_save_path=log_dir)
-    model.learn(total_timesteps=50e6, callback=callback)
+    model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = "RDQN"
     if explore:
