@@ -55,8 +55,6 @@ def eval_env(custom, recurrent = False):
     env = DummyVecEnv([lambda: env])
     if not recurrent:
         env = VecFrameStack(env, n_stack=4, channels_order='last')
-    else:
-        env = VecFrameStack(env, n_stack=2, channels_order='last')
 
     env = VecMonitor(env)
 
@@ -111,8 +109,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
 
     if not recurrent:
         env = VecFrameStack(env, n_stack=4, channels_order='last')
-    else:
-        env = VecFrameStack(env, n_stack=2, channels_order='last')
+
     env = LevelMonitor(env)
 
     return env
