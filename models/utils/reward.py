@@ -27,19 +27,18 @@ class customReward(gym.Wrapper):
 
         curr_x = info['x_pos'] # posicion actual
 
-        # iniciar posicion en el primer step
         if self.prev_x_pos is None:
             self.prev_x_pos = curr_x
 
         # en caso de estar estancado, penalizacion acumulativa
         if curr_x == self.prev_x_pos:
             self.stuck_time += 1
-            reward -= min(0.2 * self.stuck_time, 5.0)
+            reward -= 0.2
 
-        # en caso de avanzar, de forma significativa premiar, en caso de avanzar luego de
-        # muchos steps estancado, premiar mas
+        # premiar por superar estancamiento
         else:
 
+            # si estuvo estancado por mas de 30 frames,y tiene un avance significativo 
             if self.stuck_time > 30 and (curr_x - self.prev_x_pos) > 3:
                 reward += min(0.5 * self.stuck_time, 5.0)
 

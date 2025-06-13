@@ -28,7 +28,7 @@ model_name = {
     'RPPO' : RecurrentPPO
 }
 
-def evaluate_model(algo_name, model_path, csv_filename, video_prefix):
+def evaluate_model(algo_name, model_path, csv_filename, video_prefix, recurrent = False):
     model = model_name[algo_name].load(model_path)
 
     levels = [f"SuperMarioBros-{lvl}-v0" for lvl in EVALUATION_LEVEL_LIST]
@@ -60,9 +60,14 @@ def evaluate_model(algo_name, model_path, csv_filename, video_prefix):
                     obs = env.reset()
                     total_reward = 0
                     max_x_pos = 0
+                    num_envs = 1
+                    episode_starts = np.ones((num_envs,), dtype=bool)
 
                     while True:
-                        action, _ = model.predict(obs, deterministic=True)
+                        if recurrent:
+                            action, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
+                        else:
+                            action, _ = model.predict(obs, deterministic=True)
                         obs, reward, done, info = env.step(action)
                         env.render()
                         total_reward += reward[0]

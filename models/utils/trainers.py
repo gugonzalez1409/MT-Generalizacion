@@ -50,7 +50,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
         ent_coef=0.03,
-        gamma=0.95,
+        gamma=0.99,
         verbose=1,
         tensorboard_log = tensorboard_log
         )
