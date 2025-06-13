@@ -37,12 +37,10 @@ class customReward(gym.Wrapper):
 
         # premiar por superar estancamiento
         else:
+            if self.stuck_time > 10:
+                reward += 1.0
 
-            # si estuvo estancado por mas de 30 frames,y tiene un avance significativo 
-            if self.stuck_time > 30 and (curr_x - self.prev_x_pos) > 3:
-                reward += min(0.5 * self.stuck_time, 5.0)
-
-            self.stuck_time = 0    
+            self.stuck_time = 0
             # reiniciar contador de estancado
 
         # castigar perder el powerup
