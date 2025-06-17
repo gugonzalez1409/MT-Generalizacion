@@ -52,6 +52,8 @@ class ICMneural(nn.Module):
         # loss para modelo inverso
         self.loss_inv = nn.CrossEntropyLoss()
 
+        self.to(self.device)
+
     def forward(self, state, next_state, action):
 
         # obtiene las caracteristicas de las observaciones

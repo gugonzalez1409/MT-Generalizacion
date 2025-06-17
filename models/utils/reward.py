@@ -24,7 +24,6 @@ class customReward(gym.Wrapper):
     def step(self, action):
 
         state, reward, done, info = self.env.step(action)
-
         curr_x = info['x_pos'] # posicion actual
 
         if self.prev_x_pos is None:

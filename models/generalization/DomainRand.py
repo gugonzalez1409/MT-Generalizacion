@@ -19,9 +19,6 @@ easy_list = [0x00, 0x06, 0x01, 0x02, 0x03, 0x04] # goomba, koopas
 normal_list = [0x12, 0x33, 0x0E, 0x15, 0x05] # tortuga con espinas, koopas con alas, tortuga con martillo
 
 def change_enemy(enemy_id):
-    """ Criterio para cambiar el enemigo,
-    se definió una lista con enemigos faciles y otra con enemigos normales
-    con la finalidad de no hacer niveles demasiado dificiles para el agente """
 
     if enemy_id in easy_list:
         # cambia por uno facil, con alguna probabilidad de enemigo de normal list
@@ -37,7 +34,6 @@ def change_enemy(enemy_id):
     
   
 def randomize_enemies(env):
-    """Probabilidad de modificar los enemigos en pantalla"""  
     # acceder a la ram expuesta por el entorno
     ram = env.unwrapped.env.ram
 
@@ -61,30 +57,7 @@ def randomize_enemies(env):
             ram[0x0016 + i] = change_enemy(enemy_id)
 
 
-def randomize_speed(env): # DONE
-    """modifica el movimiento horizontal del jugador"""
-
-    current_speed = env.unwrapped.env.ram[0x0057]
-
-    if current_speed > 0x00: # derecha
-        bound = min(current_speed + random.randint(0, 15), 0x28)
-        new_speed = random.randint(1, bound)
-
-    elif current_speed < 0x00: # izquierda
-    
-        current_speed_signed = current_speed - 0x100
-        bound = max(current_speed_signed - random.randint(0, 15), -40)
-        new_speed_signed = random.randint(bound, -1)
-        new_speed = new_speed_signed & 0xFF
-
-    else:
-        new_speed = current_speed
-    env.unwrapped.env.ram[0x0057] = new_speed
-
-
-
 def randomize_enemies_speed(env):
-    """Modifica la velocidad de los enemigos y cambia su dirección al toparse con una pared."""
     
     for i in range(5): 
         enemy_speed_address = 0x0058 + i
@@ -93,7 +66,7 @@ def randomize_enemies_speed(env):
 
         if enemy_state == 0x02:
 
-            new_speed = -current_speed & 0xFF
+            new_speed = (-int(current_speed)) & 0xFF
         else:
             new_speed = current_speed
         env.unwrapped.env.ram[enemy_speed_address] = new_speed + random.randint(0, 7)
@@ -116,7 +89,6 @@ class DomainRandom(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         self.current_step += 1
 
-        if(self.current_step % 30 == 0): randomize_speed(self.env)
         if(self.current_step % self.enemy_random_frames == 0): randomize_enemies_speed(self.env)
         if(self.current_step % 100 == 0): randomize_enemies(self.env)
         

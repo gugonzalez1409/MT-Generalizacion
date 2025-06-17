@@ -6,9 +6,9 @@ from .level_monitor import LevelMonitor
 from nes_py.wrappers import JoypadSpace
 from ..generalization.ExploreGo import ExploreGo
 from ..generalization.DomainRand import DomainRandom
-from stable_baselines3.common.atari_wrappers import AtariWrapper
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor
+from stable_baselines3.common.atari_wrappers import AtariWrapper
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor, VecNormalize
 
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
@@ -110,6 +110,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
     if not recurrent:
         env = VecFrameStack(env, n_stack=4, channels_order='last')
 
+    env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0, clip_reward=10.0)
     env = LevelMonitor(env)
 
     return env
