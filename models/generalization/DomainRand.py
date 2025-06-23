@@ -73,9 +73,9 @@ def randomize_enemies_speed(env):
 
 
 class DomainRandom(gym.Wrapper):
-    def __init__(self, env, enemy_random_frames = 50):
-        super().__init__(env)
+    def __init__(self, env, enemy_random_frames = 500):
 
+        super().__init__(env)
         self.current_step = 0
         self.enemy_random_frames = enemy_random_frames
 
@@ -86,11 +86,12 @@ class DomainRandom(gym.Wrapper):
         return obs
 
     def step(self, action):
+        
         obs, reward, done, info = self.env.step(action)
         self.current_step += 1
 
         if(self.current_step % self.enemy_random_frames == 0): randomize_enemies_speed(self.env)
-        if(self.current_step % 100 == 0): randomize_enemies(self.env)
+        if(self.current_step % self.enemy_random_frames == 0): randomize_enemies(self.env)
         
         return obs, reward, done, info
 

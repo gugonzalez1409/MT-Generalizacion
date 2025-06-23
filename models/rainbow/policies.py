@@ -11,7 +11,7 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, NatureC
 
 
 class RainbowNet(BasePolicy):
-    """Clase para redes neuronales con Dueling y Noisy Nets"""
+
     def __init__(
         self,
         observation_space: gym.spaces.Space,
@@ -117,7 +117,6 @@ class RainbowNet(BasePolicy):
 
 
 class RainbowPolicy(QRDQNPolicy):
-    """Clase que iniciliza la red neuronal de Rainbow"""
 
     def __init__(
       self,
@@ -157,7 +156,7 @@ class RainbowPolicy(QRDQNPolicy):
 
 
     def make_quantile_net(self) -> RainbowNet:
-        """Instancia las redes neuronales"""
+        
         net_args = self._update_features_extractor(self.net_args, features_extractor=None)
         net_args.update({
             'dueling': self.dueling,

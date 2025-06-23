@@ -11,7 +11,7 @@ class NoisyLinear(nn.Module):
         self.out_features = out_features
         self.sigma = sigma
 
-        # mu y sigma son los parametros de la distribucion normal
+        # mu y sigma param de la distribucion normal
         self.weight_mu = nn.Parameter(th.empty(out_features, in_features))
         self.bias_mu = nn.Parameter(th.empty(out_features))
 

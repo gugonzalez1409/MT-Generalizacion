@@ -81,14 +81,12 @@ class PER(ReplayBuffer):
                 o, a, r, _ = queue[0]
                 no, _, _, d = queue[self.n_step]
 
-                # calculate reward between
                 for k in range(1, self.n_step):
                     r += queue[k][2] * self.gamma**k
                     if queue[k][3]:
                         d = True
                         break
 
-                # store observation data without evaluating it
                 self.observations[self.pos] = o
                 self.next_observations[self.pos] = no
 
@@ -106,6 +104,7 @@ class PER(ReplayBuffer):
                     self.pos = 0
 
     def _set_priority_min(self, idx, priority_alpha):
+
         idx += self.buffer_size
         self.priority_min[idx] = priority_alpha
         while idx >= 2:
@@ -115,6 +114,7 @@ class PER(ReplayBuffer):
             )
 
     def _set_priority_sum(self, idx, priority):
+
         idx += self.buffer_size
         self.priority_sum[idx] = priority
         while idx >= 2:
@@ -124,9 +124,11 @@ class PER(ReplayBuffer):
             )
 
     def _sum(self):
+
         return self.priority_sum[1]
 
     def _min(self):
+        
         return self.priority_min[1]
 
     def find_prefix_sum_idx(self, prefix_sum):
