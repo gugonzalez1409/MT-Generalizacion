@@ -31,6 +31,8 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
 def trainPPO(explore, random, custom, vectorized, impala, icm):
 
+    print("Trainning PPO")
+
     if impala:
         policy_kwargs = dict(
             features_extractor_class=ImpalaCNN,
@@ -71,6 +73,8 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
 
 
 def trainDQN(explore, random, custom, vectorized, impala, icm):
+
+    print("Trainning DQN")
 
     if impala:
         policy_kwargs = dict(
@@ -116,6 +120,8 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
 
 def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 
+    print("Trainning Recurrent PPO")
+
     recurrent = True
 
     if impala:
@@ -158,6 +164,8 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 
 
 def trainRainbow(explore, random, custom, vectorized, impala, icm):
+
+    print("Trainning Rainbow DQN")
 
     if impala:
         policy_kwargs = dict(

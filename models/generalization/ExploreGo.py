@@ -35,4 +35,3 @@ class ExploreGo(gym.Wrapper):
                 obs = next_obs
 
         return obs
-
