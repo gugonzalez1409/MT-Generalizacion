@@ -108,7 +108,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
     env = VecMonitor(SubprocVecEnv([lambda: make_env(explore, random, custom) for _ in range(num_envs)]), filename=log_dir)
 
     if not recurrent:
-        env = VecFrameStack(env, n_stack=4, channels_order='first')
+        env = VecFrameStack(env, n_stack=4, channels_order='last')
     env = LevelMonitor(env)
 
     return env
