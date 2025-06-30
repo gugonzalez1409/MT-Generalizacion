@@ -32,6 +32,10 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 def trainPPO(explore, random, custom, vectorized, impala, icm):
 
     print("Trainning PPO")
+    if random: print("Using Domain Randomization")
+    if custom: print("Using Custom Reward")
+    if impala: print("Using Impala CNN")
+    if explore: print("Using ExploreGo")
 
     if impala:
         policy_kwargs = dict(
@@ -75,6 +79,10 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
 def trainDQN(explore, random, custom, vectorized, impala, icm):
 
     print("Trainning DQN")
+    if random: print("Using Domain Randomization")
+    if custom: print("Using Custom Reward")
+    if impala: print("Using Impala CNN")
+    if explore: print("Using ExploreGo")
 
     if impala:
         policy_kwargs = dict(
@@ -121,6 +129,12 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
 def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 
     print("Trainning Recurrent PPO")
+    if random: print("Using Domain Randomization")
+    if custom: print("Using Custom Reward")
+    if impala: print("Using Impala CNN")
+    if explore: print("Using ExploreGo")
+
+    
 
     recurrent = True
 
@@ -166,6 +180,10 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 def trainRainbow(explore, random, custom, vectorized, impala, icm):
 
     print("Trainning Rainbow DQN")
+    if random: print("Using Domain Randomization")
+    if custom: print("Using Custom Reward")
+    if impala: print("Using Impala CNN")
+    if explore: print("Using ExploreGo")
 
     if impala:
         policy_kwargs = dict(
