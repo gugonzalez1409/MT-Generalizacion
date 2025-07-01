@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('--algo', type=str, choices=['PPO', 'DQN', 'RPPO', 'RDQN'], help= 'Algoritmo a entrenar')
     parser.add_argument('--explore', type=int, help= 'Pasos de exploracion en ExploreGo')
     parser.add_argument('--icm', action='store_true', default=False, help='Activa ICM en ExploreGo')
-    parser.add_argument('--random', action='store_true', default=False, help= 'Cantidad de frames en las que se usa randomizacion de entorno')
+    parser.add_argument('--random', action='store_true', default=False, help= 'Activa la randomizacion de entorno')
     parser.add_argument('--custom', action='store_true', default=False, help='Activa recompensa personalizada')
     parser.add_argument('--impala', action='store_true', default=False, help='Activa Impala CNN como Extractor de caracteristicas')
 

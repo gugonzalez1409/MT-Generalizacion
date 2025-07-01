@@ -8,7 +8,7 @@ from ..generalization.ExploreGo import ExploreGo
 from ..generalization.DomainRand import DomainRandom
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import AtariWrapper
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor, VecNormalize
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor, VecNormalize, VecTransposeImage
 
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
@@ -55,7 +55,7 @@ def eval_env(custom, recurrent = False):
     env = DummyVecEnv([lambda: env])
     if not recurrent:
         env = VecFrameStack(env, n_stack=4, channels_order='last')
-
+        env = VecTransposeImage(env)
     env = VecMonitor(env)
 
     return env

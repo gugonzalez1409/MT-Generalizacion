@@ -4,7 +4,7 @@ from stable_baselines3 import PPO, DQN
 from ..rainbow.rainbow import Rainbow
 from ..rainbow.policies import RainbowPolicy
 from ..generalization.ImpalaCNN import ImpalaCNN
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, CallbackList
 from models.utils.envs import make_single_env, vectorizedEnv, eval_env
 
 
@@ -61,7 +61,9 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
         )
     
-    callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
+    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    eval_callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir) # cada 100k steps evalua el modelo y guarda si encuentra uno mejor
+    callback = CallbackList([save_callback, eval_callback])
     model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = 'PPO'
@@ -111,7 +113,9 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
         )
     
-    callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir)
+    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    eval_callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir) # cada 100k steps evalua el modelo y guarda si encuentra uno mejor
+    callback = CallbackList([save_callback, eval_callback])
     model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = "DQN"
@@ -162,7 +166,9 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
     )
 
-    callback = EvalCallback(eval_env = eval_env(custom), n_eval_episodes=10, eval_freq=100000, log_path=log_dir, best_model_save_path=log_dir)
+    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    eval_callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir) # cada 100k steps evalua el modelo y guarda si encuentra uno mejor
+    callback = CallbackList([save_callback, eval_callback])
     model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = "RPPO"
@@ -233,7 +239,9 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
     )
 
-    callback = EvalCallback(eval_env = eval_env(custom), n_eval_episodes=10, eval_freq=100000, log_path=log_dir, best_model_save_path=log_dir)
+    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    eval_callback = EvalCallback(eval_env=eval_env(custom), n_eval_episodes=10, eval_freq=100000,log_path=log_dir, best_model_save_path=log_dir) # cada 100k steps evalua el modelo y guarda si encuentra uno mejor
+    callback = CallbackList([save_callback, eval_callback])
     model.learn(total_timesteps=75e6, callback=callback)
 
     model_name = "RDQN"
