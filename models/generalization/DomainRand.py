@@ -73,7 +73,7 @@ def randomize_enemies_speed(env):
 
 
 class DomainRandom(gym.Wrapper):
-    def __init__(self, env, enemy_random_frames = 500):
+    def __init__(self, env, enemy_random_frames = 300):
 
         super().__init__(env)
         self.current_step = 0

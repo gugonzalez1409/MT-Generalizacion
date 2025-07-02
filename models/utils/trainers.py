@@ -1,11 +1,11 @@
 from typing import Callable
 from sb3_contrib import RecurrentPPO
-from stable_baselines3 import PPO, DQN
 from ..rainbow.rainbow import Rainbow
+from stable_baselines3 import PPO, DQN
 from ..rainbow.policies import RainbowPolicy
 from ..generalization.ImpalaCNN import ImpalaCNN
-from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, CallbackList
-from models.utils.envs import make_single_env, vectorizedEnv, eval_env
+from models.utils.envs import make_single_env, vectorizedEnv
+from stable_baselines3.common.callbacks import CheckpointCallback
 
 
 
@@ -61,8 +61,11 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
         )
     
-    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    save_freq = max(10e6 // 11, 1)
+
+    save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='PPO_checkpoint', verbose=1) 
     model.learn(total_timesteps=75e6, callback=save_callback)
+
 
     model_name = 'PPO'
 
@@ -111,7 +114,9 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
         )
     
-    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    save_freq = max(10e6 // 11, 1)
+
+    save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='DQN_checkpoint')
     model.learn(total_timesteps=75e6, callback=save_callback)
 
     model_name = "DQN"
@@ -162,8 +167,11 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
     )
 
-    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    save_freq = max(10e6 // 11, 1)
+
+    save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='RPPO_checkpoint')
     model.learn(total_timesteps=75e6, callback=save_callback)
+
 
     model_name = "RPPO"
 
@@ -233,7 +241,9 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
         tensorboard_log = tensorboard_log
     )
 
-    save_callback = CheckpointCallback(save_freq=100000, save_path=log_dir, name_prefix='PPO_checkpoint') # cada 100k steps guarda
+    save_freq = max(10e6 // 11, 1)
+
+    save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='RDQN_checkpoint', verbose=1)
     model.learn(total_timesteps=75e6, callback=save_callback)
 
     model_name = "RDQN"
