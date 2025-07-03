@@ -209,7 +209,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
             features_extractor_kwargs=dict(
                 features_dim=512,
                 depths=[16, 32, 32],
-                scale=2
+                scale=1
             )
         )
 
