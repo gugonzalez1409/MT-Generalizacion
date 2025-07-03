@@ -55,6 +55,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         learning_rate=linear_schedule(5e-4),
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
+        n_steps=512,
         ent_coef=0.03,
         gamma=0.99,
         verbose=1,
@@ -161,6 +162,8 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         learning_rate = linear_schedule(1e-5),
         env = vectorizedEnv(explore, random, custom, icm, recurrent) if vectorized else make_single_env(explore, random, custom, recurrent),
         policy_kwargs= policy_kwargs,
+        batch_size=64,
+        n_steps=512,
         ent_coef=0.03,
         gamma=0.95,
         verbose=1,
@@ -224,7 +227,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
 
     model = Rainbow(
         RainbowPolicy,
-        env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
+        env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom, icm=False),
         learning_rate=linear_schedule(2.5e-4),
         learning_starts=50000,
         policy_kwargs=policy_kwargs,

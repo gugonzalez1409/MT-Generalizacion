@@ -45,23 +45,6 @@ Funciones de creacion de entorno SMB
 
 """
 
-def eval_env(custom, recurrent = False):
-    """Entorno para EvalCallback"""
-
-    env = gym.make('SuperMarioBrosRandomStages-v0', stages= EVALUATION_LEVEL_LIST)
-    env = JoypadSpace(env, SIMPLE_MOVEMENT)
-    if custom: env = customReward(env)
-    env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
-    env = DummyVecEnv([lambda: env])
-    if not recurrent:
-        env = VecFrameStack(env, n_stack=4, channels_order='last')
-        env = VecTransposeImage(env)
-    env = VecMonitor(env)
-
-    return env
-
-
-
 def make_single_env(explore, random, custom, icm):
     """Entorno simple para SMB"""
 
@@ -75,7 +58,7 @@ def make_single_env(explore, random, custom, icm):
         else:
             explorer = None 
         env = ExploreGo(env, explore, explorer=explorer)
-    if(random): env = DomainRandom(env, random)
+    if(random): env = DomainRandom(env, random, render=False) # usar render solo en entorno simple
     if(custom): env = customReward(env)
 
     env = DummyVecEnv([lambda: env])
@@ -89,7 +72,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
     """Entorno vectorizado a numero de cores de CPU"""
     def make_env(explore, random, custom):
 
-        env = gym.make('SuperMarioBrosRandomStages-v0', stages= TRAINING_LEVEL_LIST)
+        env = gym.make('SuperMarioBrosRandomStages-v1', stages= TRAINING_LEVEL_LIST)
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward= False)
 
@@ -99,7 +82,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
             else:
                 explorer = None
             env = ExploreGo(env, explore, explorer=explorer)
-        if(random): env = DomainRandom(env, random)
+        if(random): env = DomainRandom(env, random, render=False)
         if(custom): env = customReward(env)
 
         return env

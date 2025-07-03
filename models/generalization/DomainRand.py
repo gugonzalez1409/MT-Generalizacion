@@ -3,8 +3,7 @@ import random
 
 """
 
-Probando metodos para Domain Randomization hechas 
-especificamente para Super Mario Bros
+Probando metodos para Domain Randomization
 
 """
 
@@ -51,6 +50,9 @@ def randomize_enemies(env):
         if active_enemy != 1 or enemy_id in not_use_list:
             continue
 
+        if enemy_id not in easy_list + normal_list:
+            continue
+
         # 50% de probabilidad de cambiar el enemigo en pantalla
         if random.random() < 0.5:
 
@@ -58,26 +60,35 @@ def randomize_enemies(env):
 
 
 def randomize_enemies_speed(env):
+
+    ram = env.unwrapped.env.ram
     
     for i in range(5): 
+
+        enemy_id = ram[0x0015 + i]
+        active_enemy = ram[0x00F + i]
         enemy_speed_address = 0x0058 + i
-        enemy_state = env.unwrapped.env.ram[0x03B0 + i] 
-        current_speed = env.unwrapped.env.ram[enemy_speed_address]
 
-        if enemy_state == 0x02:
+        if active_enemy != 1 or enemy_id in not_use_list:
+            continue
 
-            new_speed = (-int(current_speed)) & 0xFF
-        else:
-            new_speed = current_speed
-        env.unwrapped.env.ram[enemy_speed_address] = new_speed + random.randint(0, 7)
+        if enemy_id not in easy_list + normal_list:
+            continue
+
+        current_speed = ram[enemy_speed_address]
+        random_boost = random.randint(-1, 2)
+
+        new_speed = (current_speed + random_boost) & 0xFF
+        ram[enemy_speed_address] = new_speed
 
 
 class DomainRandom(gym.Wrapper):
-    def __init__(self, env, enemy_random_frames = 300):
+    def __init__(self, env, enemy_random_frames = 300, render=False):
 
         super().__init__(env)
         self.current_step = 0
         self.enemy_random_frames = enemy_random_frames
+        self.render_enabled = render
 
     def reset(self):
 
@@ -86,12 +97,19 @@ class DomainRandom(gym.Wrapper):
         return obs
 
     def step(self, action):
+
+        if self.render_enabled:
+            self.env.render()
         
         obs, reward, done, info = self.env.step(action)
         self.current_step += 1
 
-        if(self.current_step % self.enemy_random_frames == 0): randomize_enemies_speed(self.env)
-        if(self.current_step % self.enemy_random_frames == 0): randomize_enemies(self.env)
+        if not done and self.current_step % self.enemy_random_frames == 0:
+            try:
+                randomize_enemies(self.env)
+                randomize_enemies_speed(self.env)
+            except Exception as e:
+                print(f"Error during randomization: {e}")
         
         return obs, reward, done, info
 
