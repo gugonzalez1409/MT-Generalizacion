@@ -43,7 +43,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
             features_extractor_kwargs=dict(
                 features_dim=512,
                 depths=[16, 32, 32],
-                scale=2
+                scale=1
             )
         )
 
@@ -94,7 +94,7 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
             features_extractor_kwargs=dict(
                 features_dim=512,
                 depths=[16, 32, 32],
-                scale=2
+                scale=1
             )
         )
 
@@ -150,7 +150,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
             features_extractor_kwargs=dict(
                 features_dim=512,
                 depths=[16, 32, 32],
-                scale=2
+                scale=1
             )
         )
 
