@@ -5,16 +5,12 @@ class customReward(gym.Wrapper):
     def __init__(self, env):
         super(customReward, self).__init__(env)
 
-        # state: small, tall, fireball
-        self.status = 'small'
         # posicion de step anterior
         self.prev_x_pos = 0
         # contador de tiempo estancado
         self.stuck_time = 0
     def reset(self, **kwargs):
 
-        # reiniciar variables
-        self.status = 'small'
         self.prev_x_pos = None
         self.stuck_time = 0
 
@@ -35,22 +31,15 @@ class customReward(gym.Wrapper):
 
         # premiar por superar estancamiento
         else:
-            if self.stuck_time > 10:
+            if self.stuck_time > 20:
                 reward += 1.0
 
             self.stuck_time = 0
-            # reiniciar contador de estancado
-
-        # castigar perder el powerup
-        if(self.status in ['tall', 'fireball'] and info['status'] == 'small'):
-            reward -= 2.0
-
-        self.status = info['status']
 
         # premiar completar nivel
         if done:
             if info['flag_get']:
-                reward += 30.0
+                reward += 50.0
 
         self.prev_x_pos = curr_x
 

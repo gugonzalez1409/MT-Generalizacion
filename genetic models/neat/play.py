@@ -1,15 +1,12 @@
 import gym.logger
 from nes_py.wrappers import JoypadSpace
-import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 import gym
-from matplotlib import pyplot as plt
 import numpy as np
 import neat
 import pickle
 import cv2
 import visualize
-import csv
 import multiprocessing
 
 # ignora avisos deprecados

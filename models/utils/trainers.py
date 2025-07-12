@@ -52,16 +52,20 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
 
     model = PPO(
         'CnnPolicy',
-        learning_rate=linear_schedule(5e-4),
+        learning_rate=linear_schedule(1.75e-4 if impala else 2.5e-4),
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
-        n_steps=512,
-        ent_coef=0.03,
-        gamma=0.99,
+        n_steps=256,
+        clip_range=0.2,
+        ent_coef=0.01,
+        gamma=0.95,
+        gae_lambda=0.95,
         verbose=1,
+        n_epochs=3,
+        max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
         )
-    
+
     save_freq = max(10e6 // 11, 1)
 
     save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='PPO_checkpoint', verbose=1) 
@@ -103,12 +107,12 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
     
     model = DQN(
         "CnnPolicy",
-        learning_rate = linear_schedule(1e-5),
+        learning_rate = linear_schedule(5e-5 if impala else 1e-4),
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs= policy_kwargs,
         buffer_size=100000,
         batch_size=64,
-        learning_starts=50000,
+        learning_starts=10000,
         exploration_final_eps= 0.05,
         exploration_fraction=0.2,
         verbose=1,
@@ -165,7 +169,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         batch_size=64,
         n_steps=512,
         ent_coef=0.03,
-        gamma=0.95,
+        gamma=0.99,
         verbose=1,
         tensorboard_log = tensorboard_log
     )
@@ -228,13 +232,13 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
     model = Rainbow(
         RainbowPolicy,
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom, icm=False),
-        learning_rate=linear_schedule(2.5e-4),
-        learning_starts=50000,
+        learning_rate=linear_schedule(5e-5 if impala else 1e-4), ### configurar para red nature o impala
+        learning_starts=10000,
         policy_kwargs=policy_kwargs,
         buffer_size=100000,
         exploration_initial_eps=1.0,
-        exploration_final_eps=0.01,
-        exploration_fraction=0.2,
+        exploration_final_eps=0.05,
+        exploration_fraction=0.05,
         batch_size=64,
         gamma=0.99,
         train_freq=4,
@@ -258,5 +262,3 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
         model_name += "_impala"
 
     model.save(f"{model_name}_mario")
-
-    
