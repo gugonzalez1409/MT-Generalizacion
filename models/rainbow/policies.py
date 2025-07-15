@@ -11,6 +11,7 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, NatureC
 
 
 class RainbowNet(BasePolicy):
+    # clase de redes para Rainbow, incluye dueling y noisy
 
     def __init__(
         self,
@@ -37,7 +38,6 @@ class RainbowNet(BasePolicy):
         if net_arch is None:
             net_arch = [64, 64]
 
-        
         self.dueling = dueling
         self.noisy = noisy
         self.noisy_kwargs = noisy_kwargs if noisy_kwargs is not None else {}
@@ -86,7 +86,7 @@ class RainbowNet(BasePolicy):
         else:
 
             quantiles = self.quantile_net(features).view(-1, self.action_space.n, self.n_quantiles)
-        
+       
         return quantiles.permute(0, 2, 1) # batch, quantiles, actions
     
     
@@ -117,7 +117,7 @@ class RainbowNet(BasePolicy):
 
 
 class RainbowPolicy(QRDQNPolicy):
-
+    # clase que inicia las redes de Rainbow
     def __init__(
       self,
       observation_space: gym.spaces.Space,
@@ -156,7 +156,6 @@ class RainbowPolicy(QRDQNPolicy):
 
 
     def make_quantile_net(self) -> RainbowNet:
-        
         net_args = self._update_features_extractor(self.net_args, features_extractor=None)
         net_args.update({
             'dueling': self.dueling,

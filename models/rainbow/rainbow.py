@@ -12,7 +12,7 @@ from stable_baselines3.common.utils import polyak_update
 
 """
 
-Implementación de Rainbow DQN, usando de base QRDQN de sb3-contrib, la cual incluye Categorical DQN.
+Implementación de Rainbow DQN, usando de base QRDQN de sb3-contrib.
 
 """
 
@@ -83,6 +83,7 @@ class Rainbow(QRDQN):
 
         for _ in range(gradient_steps):
             
+            # reset noise de noisy nets
             if hasattr(self.quantile_net, "reset_noise"):
                 # reseteo de noise de red online
                 self.quantile_net.reset_noise()
@@ -133,7 +134,7 @@ class Rainbow(QRDQN):
 
 
     def _on_step(self):
-        # actualizar beta de per
+        # actualizar log de beta per
         self.replay_buffer.update_beta(self._current_progress_remaining)
 
         if self.num_timesteps % self.target_update_interval == 0:
@@ -145,7 +146,7 @@ class Rainbow(QRDQN):
 
     def predict(self, observation, state = None, episode_start = None, deterministic = False):
         if hasattr(self.policy, "reset_noise"):
-            print("Reseteando noise en predict")
+            #print("Reseteando noise en predict")
             self.policy.reset_noise()
         return super().predict(observation, state, episode_start, deterministic)
 

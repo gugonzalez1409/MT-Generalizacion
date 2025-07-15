@@ -46,7 +46,7 @@ class NoisyLinear(nn.Module):
     def _scale_noise(self, features: int):
 
         x = th.randn(features)
-        return x.sign().mul(x.abs().sqrt()) 
+        return x.sign().mul(x.abs().sqrt())
     
     def forward(self, input: th.Tensor) -> th.Tensor:
 
@@ -54,4 +54,3 @@ class NoisyLinear(nn.Module):
         bias = self.bias_mu + self.bias_sigma * self.bias_epsilon
 
         return th.nn.functional.linear(input, weight, bias)
-

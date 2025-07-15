@@ -27,34 +27,27 @@ class PER(ReplayBuffer):
         beta_end_fraction: float = 1.0,
         optimize_memory_usage=False,
     ):
-
         super(ReplayBuffer, self).__init__(
             buffer_size, observation_space, action_space, device, n_envs=n_envs
         )
 
-        # scheduler para beta
         self.beta_schedule = get_linear_fn(beta_initial, beta_final, beta_end_fraction)
         self.beta = beta_initial
 
-        # valor de n_step learning y factor de descuento
         self.n_step = n_step
         self.gamma = gamma
 
-        # arreglos que contienen los valores de las transiciones
         self.observations = np.full(self.buffer_size, None)
         self.next_observations = np.full(self.buffer_size, None)
         self.actions = torch.zeros((self.buffer_size, self.action_dim), dtype=torch.int64, device=self.device)
         self.rewards = torch.zeros((self.buffer_size,), dtype=torch.float32, device=self.device)
         self.dones = torch.zeros((self.buffer_size,), dtype=torch.float32, device=self.device)
 
-        # guarda los valores de las transiciones n-step
-        self.n_step_buffers = [deque(maxlen=self.n_step + 1) for j in range(self.n_envs)]
+        self.n_step_queue = [deque(maxlen=self.n_step + 1) for j in range(self.n_envs)]
 
-        # arreglos para las prioridades maximas y minimas
-        self.priority_sum = np.full((2 * self.buffer_size), 0.0, dtype=np.float64)
-        self.priority_min = np.full((2 * self.buffer_size), np.inf, dtype=np.float64)
+        self.tree_priority_sum = np.full((2 * self.buffer_size), 0.0, dtype=np.float64)
+        self.tree_priority_min = np.full((2 * self.buffer_size), np.inf, dtype=np.float64)
 
-        # prioridad inicial
         self.max_priority = 1.0
 
     def add(
@@ -66,115 +59,119 @@ class PER(ReplayBuffer):
         done: np.ndarray,
         infos: List[Dict[str, Any]],
     ) -> None:
-        
-        # SB3
+
         if isinstance(self.observation_space, spaces.Discrete):
             obs = obs.reshape((self.n_envs, *self.obs_shape))
             next_obs = next_obs.reshape((self.n_envs, *self.obs_shape))
 
         action = action.reshape((self.n_envs, self.action_dim))
 
-        for queue, o, a, r, d in zip(self.n_step_buffers, obs, action, reward, done):
-            queue.append((o, a, r, d))
+        for queue, obs, act, rwd, dns in zip(self.n_step_queue, obs, action, reward, done):
+
+            queue.append((obs, act, rwd, dns))
 
             if len(queue) == self.n_step + 1 and not queue[0][3]:
-                o, a, r, _ = queue[0]
-                no, _, _, d = queue[self.n_step]
 
+                obs, act, rwd, _ = queue[0]
+                next_obs, _, _, dns = queue[self.n_step]
+
+                # n step reward
                 for k in range(1, self.n_step):
-                    r += queue[k][2] * self.gamma**k
+
+                    rwd += queue[k][2] * self.gamma**k
                     if queue[k][3]:
-                        d = True
+                        dns = True
                         break
 
-                self.observations[self.pos] = o
-                self.next_observations[self.pos] = no
+                self.observations[self.pos] = obs
+                self.next_observations[self.pos] = next_obs
+                self.actions[self.pos] = self.to_torch(act)
+                self.rewards[self.pos] = self.to_torch(rwd)
+                self.dones[self.pos] = self.to_torch(dns)
 
-                self.actions[self.pos] = self.to_torch(a)
-                self.rewards[self.pos] = self.to_torch(r)
-                self.dones[self.pos] = self.to_torch(d)
-
-                # dar prioridades iniciales a las transiciones
                 self._set_priority_min(self.pos, sqrt(self.max_priority))
                 self._set_priority_sum(self.pos, sqrt(self.max_priority))
 
                 self.pos += 1
                 if self.pos == self.buffer_size:
+                    
                     self.full = True
                     self.pos = 0
 
-    def _set_priority_min(self, idx, priority_alpha):
 
-        idx += self.buffer_size
-        self.priority_min[idx] = priority_alpha
-        while idx >= 2:
-            idx //= 2
-            self.priority_min[idx] = min(
-                self.priority_min[2 * idx], self.priority_min[2 * idx + 1]
+    def _set_priority_min(self, i, priority_alpha):
+
+        i += self.buffer_size
+        self.tree_priority_min[i] = priority_alpha
+        while i >= 2:
+            i //= 2
+            self.tree_priority_min[i] = min(
+                self.tree_priority_min[2 * i], self.tree_priority_min[2 * i + 1]
             )
 
-    def _set_priority_sum(self, idx, priority):
+    def _set_priority_sum(self, i, priority):
 
-        idx += self.buffer_size
-        self.priority_sum[idx] = priority
-        while idx >= 2:
-            idx //= 2
-            self.priority_sum[idx] = (
-                self.priority_sum[2 * idx] + self.priority_sum[2 * idx + 1]
+        i += self.buffer_size
+        self.tree_priority_sum[i] = priority
+        while i >= 2:
+            i //= 2
+            self.tree_priority_sum[i] = (
+                self.tree_priority_sum[2 * i] + self.tree_priority_sum[2 * i + 1]
             )
 
     def _sum(self):
 
-        return self.priority_sum[1]
+        return self.tree_priority_sum[1]
 
     def _min(self):
-        
-        return self.priority_min[1]
+
+        return self.tree_priority_min[1]
 
     def find_prefix_sum_idx(self, prefix_sum):
 
-        idx = 1
-        while idx < self.buffer_size:
-            if self.priority_sum[idx * 2] > prefix_sum:
-                idx = 2 * idx
+        i = 1
+        while i < self.buffer_size:
+            if self.tree_priority_sum[i * 2] > prefix_sum:
+                i = 2 * i
             else:
-                prefix_sum -= self.priority_sum[idx * 2]
-                idx = 2 * idx + 1
-        return idx - self.buffer_size
+                prefix_sum -= self.tree_priority_sum[i * 2]
+                i = 2 * i + 1
+        return i - self.buffer_size
 
     def update_priorities(self, indexes, priorities):
 
-        for idx, priority in zip(indexes, priorities):
+        for i, priority in zip(indexes, priorities):
             self.max_priority = max(self.max_priority, priority)
             priority_alpha = sqrt(priority)
-            self._set_priority_min(idx, priority_alpha)
-            self._set_priority_sum(idx, priority_alpha)
+            self._set_priority_min(i, priority_alpha)
+            self._set_priority_sum(i, priority_alpha)
 
     def update_beta(self, current_progress_remaining: float):
-        
+
         self.beta = self.beta_schedule(current_progress_remaining)
 
     def sample(self, batch_size: int, env: Union[VecNormalize, None] = None) -> Tuple[np.ndarray, torch.Tensor, ReplayBufferSamples]:
-        
+
         weights = np.zeros(shape=batch_size, dtype=np.float32)
         indices = np.zeros(shape=batch_size, dtype=np.int32)
 
         for i in range(batch_size):
+
             p = random.random() * self._sum()
-            idx = self.find_prefix_sum_idx(p)
-            indices[i] = idx
+            index = self.find_prefix_sum_idx(p)
+            indices[i] = index
 
         prob_min = self._min() / self._sum()
         max_weight = (prob_min * self.size()) ** (-self.beta)
 
         for i in range(batch_size):
-            
-            idx = indices[i]
-            prob = self.priority_sum[idx + self.buffer_size] / self._sum()
+
+            index = indices[i]
+            prob = self.tree_priority_sum[index + self.buffer_size] / self._sum()
             weight = (prob * self.size()) ** (-self.beta)
             weights[i] = weight / max_weight
 
-        return (indices, torch.from_numpy(weights).to(self.device), self._get_samples(indices, env),)
+        return (indices, torch.from_numpy(weights).to(self.device), self._get_samples(indices, env))
 
     def obs_to_torch(self, array, copy=True):
 
@@ -182,7 +179,7 @@ class PER(ReplayBuffer):
         return super().to_torch(array, copy)
 
     def _get_samples(self, batch_inds: np.ndarray, env: VecNormalize | None = None) -> ReplayBufferSamples:
-
+        
         return ReplayBufferSamples(
             self.obs_to_torch(self.observations[batch_inds]),
             self.actions[batch_inds, :],
@@ -192,12 +189,12 @@ class PER(ReplayBuffer):
         )
 
     def reset(self):
-
+        
         super().reset()
 
-        self.n_step_buffers = [deque(maxlen=self.n_step + 1) for j in range(self.n_envs)]
+        self.n_step_queue = [deque(maxlen=self.n_step + 1) for j in range(self.n_envs)]
 
-        self.priority_sum = np.full((2 * self.buffer_size), 0.0, dtype=np.float64)
-        self.priority_min = np.full((2 * self.buffer_size), np.inf, dtype=np.float64)
+        self.tree_priority_sum = np.full((2 * self.buffer_size), 0.0, dtype=np.float64)
+        self.tree_priority_min = np.full((2 * self.buffer_size), np.inf, dtype=np.float64)
 
         self.max_priority = 1.0
