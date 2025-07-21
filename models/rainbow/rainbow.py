@@ -32,7 +32,7 @@ class Rainbow(QRDQN):
         gamma: float = 0.99,
         max_grad_norm: Optional[float] = None,
         train_freq: int = 4,
-        gradient_steps: int = 2,
+        gradient_steps: int = 1,
         replay_buffer_class: Optional[Type[ReplayBuffer]] = PER,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         target_update_interval: int = 10000,

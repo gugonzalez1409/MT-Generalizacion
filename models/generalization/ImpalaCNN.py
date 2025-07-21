@@ -11,18 +11,18 @@ class ResidualBlock(nn.Module):
         # bloque residual con batch normalization
         super(ResidualBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-        self.batch1 = nn.BatchNorm2d(in_channels)
+        #self.batch1 = nn.BatchNorm2d(in_channels)
         self.conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-        self.batch2 = nn.BatchNorm2d(in_channels)
+        #self.batch2 = nn.BatchNorm2d(in_channels)
 
     def forward(self, x):
 
         identity = x
         out = self.conv1(x)
-        out = self.batch1(out)
+        #out = self.batch1(out)
         out = F.relu(out)
         out = self.conv2(out)
-        out = self.batch2(out)
+        #out = self.batch2(out)
         out += identity
 
         return F.relu(out)
@@ -33,7 +33,7 @@ class ConvSequence(nn.Module):
 
         super(ConvSequence, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
-        self.batch = nn.BatchNorm2d(out_channels)
+        #self.batch = nn.BatchNorm2d(out_channels)
         self.max_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.res_block1 = ResidualBlock(out_channels)
         self.res_block2 = ResidualBlock(out_channels)
@@ -41,7 +41,7 @@ class ConvSequence(nn.Module):
     def forward(self, x):
 
         out = self.conv(x)
-        out = self.batch(out)
+        #out = self.batch(out)
         out = F.relu(out)
         out = self.max_pool(out)
         out = self.res_block1(out)
@@ -51,7 +51,7 @@ class ConvSequence(nn.Module):
 
 class ImpalaCNN(BaseFeaturesExtractor):
 
-    def __init__(self, observation_spaces: gym.spaces.Box, features_dim = 512, depths=[16, 32, 32], scale = 1):
+    def __init__(self, observation_spaces: gym.spaces.Box, features_dim = 256, depths=[16, 32, 32], scale = 1):
 
         super().__init__(observation_spaces, features_dim=features_dim)
         
@@ -70,7 +70,7 @@ class ImpalaCNN(BaseFeaturesExtractor):
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
 
         self.fc = nn.Linear(current_channels, features_dim)
-        self.dropout = nn.Dropout(p=0.2)
+        #self.dropout = nn.Dropout(p=0.1)
 
         self._init_weights()
 
@@ -81,7 +81,7 @@ class ImpalaCNN(BaseFeaturesExtractor):
         out = self.conv_sequences(out)
         out = self.gap(out)
         out = out.view(out.size(0), -1)
-        out = self.dropout(out)
+        #out = self.dropout(out)
         out = self.fc(out)
         out = F.relu(out)
         

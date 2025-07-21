@@ -8,71 +8,73 @@ import pickle
 import cv2
 import visualize
 import multiprocessing
-
-# ignora avisos deprecados
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 gym.logger.set_level(40)
 
-class Worker(object):
+TRAINING_LEVEL_LIST = [
+        "1-2", "1-4", "2-1", "2-3",       
+        "3-2", "3-4", "4-1", "4-3",      
+        "5-1", "5-4", "6-2", "6-4",       
+        "7-1", "8-2",
+]
+
+class fitness(object):
 
     def __init__(self, genome, config):
         self.genome = genome
         self.config = config
         
-    def work(self):
+    def eval(self):
 
-        self.env = gym.make('SuperMarioBros-v0')
+        self.env = gym.make('SuperMarioBrosRandomStages-v1', stages=TRAINING_LEVEL_LIST)
         self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
 
         net = neat.nn.FeedForwardNetwork.create(self.genome, self.config)
 
-        done = False
         obs = self.env.reset()
-        i=0
-        fitness=0
-        fitness_max=41
-        genome_fitness=0
+        done = False
+        fitness_total = 0
+        patience = 0
+        max_x_pos = 0
 
         while done==False:
             
-            
             obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
-            screen = cv2.resize(obs, (28, 40)) # obs de 28,40
+            screen = cv2.resize(obs, (28, 40)) # obs de 28,40 en escala de grises
             screen = np.ndarray.flatten(screen)
             #self.env.render()
             output = net.activate(screen)
-            output=output.index(max(output))
+            action = output.index(max(output))
             
-            obs, reward, done, info = self.env.step(output)
+            obs, reward, done, info = self.env.step(action)
 
-            fitness=reward
-            if fitness>fitness_max:
-                i=0
-                fitness_max=fitness
-            else:
-                i+=1
-            
-            if done or i>200 or info["life"]<2:
-                done=True
+            fitness_total += reward
 
-                genome_fitness=int(fitness_max)
-                return genome_fitness
-
-            if info["flag_get"]==True:
-                done=True
-                genome_fitness=110000
+            if info["x_pos"] > max_x_pos:
                 
+                max_x_pos = info["x_pos"]
+                patience = 0
+
+            else:
+                patience += 1
             
-                return genome_fitness
+            if done or patience > 100:
+                break
+
+            if info["flag_get"]:
+                fitness_total += 10000
+                break
+
+        return int(fitness_total)
             
             
         
 def eval_genomes(genome, config):
     
-    worky = Worker(genome, config)
-    return worky.work()
+    eval = fitness(genome, config)
+    return eval.eval()
 
 
 if __name__ == '__main__':
@@ -86,13 +88,12 @@ if __name__ == '__main__':
     pop.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
-    pop.add_reporter(neat.Checkpointer(50))
+    pop.add_reporter(neat.Checkpointer(generation_interval=20))
 
 
     pe = neat.ParallelEvaluator(multiprocessing.cpu_count()-1, eval_genomes)
 
-    #winner=pop.run(eval_genomes, 2)
-    winner = pop.run(pe.evaluate)
+    winner = pop.run(pe.evaluate, 200)
 
     visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
     visualize.plot_species(stats, view=True, filename="feedforward-speciation.svg")

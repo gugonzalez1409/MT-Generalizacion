@@ -62,7 +62,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         gamma=0.99,
         gae_lambda=0.95,
         verbose=1,
-        n_epochs=10,
+        n_epochs=4,
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
         )
@@ -117,6 +117,7 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
         exploration_final_eps= 0.05,
         exploration_fraction=0.2,
         verbose=1,
+        train_freq=4,
         tensorboard_log = tensorboard_log
         )
     
@@ -175,7 +176,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         gamma=0.99,
         gae_lambda=0.95,
         verbose=1,
-        n_epochs=10,
+        n_epochs=4,
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
     )
@@ -213,7 +214,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
             dueling=True,
             noisy=True,
             noisy_kwargs={
-                'sigma': 0.5
+                'sigma': 0.2
             },
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
@@ -230,7 +231,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
             dueling=True,
             noisy=True,
             noisy_kwargs={
-                'sigma': 0.5
+                'sigma': 0.2
             }
             )
 
@@ -238,7 +239,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
     model = Rainbow(
         RainbowPolicy,
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom, icm=False),
-        learning_rate=linear_schedule(5e-5 if impala else 1e-4), ### configurar para red nature o impala
+        learning_rate=linear_schedule(5e-5 if impala else 1e-4),
         learning_starts=10000,
         policy_kwargs=policy_kwargs,
         buffer_size=100000,
