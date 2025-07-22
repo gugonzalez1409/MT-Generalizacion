@@ -1,6 +1,7 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 from typing import Callable
+import argparse
 from stable_baselines3 import PPO, DQN
 from stable_baselines3.common.vec_env import VecMonitor, VecExtractDictObs
 from models.rainbow.rainbow import Rainbow
@@ -24,13 +25,19 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
 
 
-def make_env(train= True):
+def make_env(train= True, algo='ppo'):
 
     num_levels = 500
     start_level = 0 if train else 1000
 
+    if algo == 'ppo':
+        num_envs = 64
+    
+    else:
+        num_envs = 128
+
     env = ProcgenEnv(
-        num_envs=64,
+        num_envs=num_envs,
         env_name="coinrun",
         num_levels=num_levels,
         start_level=start_level,
@@ -61,7 +68,7 @@ def trainPPO(explore, impala):
     else:
         policy_kwargs = {}
     
-    env = make_env(train=True)
+    env = make_env(train=True, algo='ppo')
     model = PPO(
         "CnnPolicy",
         n_steps=256,
@@ -77,7 +84,7 @@ def trainPPO(explore, impala):
         tensorboard_log=tensorboard_log
         )
     
-    model.learn(total_timesteps=50e6)
+    model.learn(total_timesteps=100e6)
 
     model_name ="coinrun-ppo"
 
@@ -105,7 +112,7 @@ def trainDQN(explore, impala):
     else:
         policy_kwargs = {}
 
-    env = make_env(train=True)
+    env = make_env(train=True, algo='dqn')
     model = DQN(
         "CnnPolicy",
         env=env,
@@ -125,14 +132,14 @@ def trainDQN(explore, impala):
         tensorboard_log=tensorboard_log
     )
 
-    model.learn(total_timesteps=50e6)
+    model.learn(total_timesteps=100e6)
     model.save("coinrun-dqn")
 
 
 
 def trainRainbow(explore, impala):
     
-    env = make_env()
+    env = make_env(train=True, algo='rdqn')
 
     if impala:
         policy_kwargs = dict(
@@ -140,9 +147,9 @@ def trainRainbow(explore, impala):
             net_arch=[256, 256],
             dueling=True,
             noisy=False,
-            #noisy_kwargs={
-            #    'sigma': 0.2
-            #},
+            noisy_kwargs={
+                'sigma': 0.2
+            },
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
@@ -157,9 +164,9 @@ def trainRainbow(explore, impala):
             net_arch=[256, 256],
             dueling=True,
             noisy=False,
-            #noisy_kwargs={
-            #    'sigma': 0.2
-            #    }
+            noisy_kwargs={
+                'sigma': 0.2
+                }
             )
 
 
@@ -183,13 +190,32 @@ def trainRainbow(explore, impala):
         tensorboard_log=tensorboard_log
     )
 
-    model.learn(total_timesteps=50e6)
+    model.learn(total_timesteps=100e6)
     model.save("coinrun-rainbow")
+
+
+def parser():
+
+    parser = argparse.ArgumentParser(description="Entrenar modelos en CoinRun")
+    parser.add_argument('--algo', type=str, choices=['ppo', 'dqn', 'rdqn'], required=True, help='Algoritmo a entrenar')
+    parser.add_argument('--explore', action='store_true', help='Usar ExploreGo')
+    parser.add_argument('--impala', action='store_true', help='Usar Impala CNN como extractor de caracteristicas')
+
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
 
-    trainPPO(explore=False, impala=True)
-    # trainRecurrentPPO(explore=True, impala=True)
-    # trainDQN(explore=True, impala=True)
-    # trainRainbow(explore=True, impala=True)
+    args = parser()
+
+    if args.algo == 'ppo':
+
+        trainPPO(args.explore, args.impala)
+
+    elif args.algo == 'dqn':
+        
+        trainDQN(args.explore, args.impala)
+
+    elif args.algo == 'rdqn':
+
+        trainRainbow(args.explore, args.impala)

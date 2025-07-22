@@ -77,7 +77,7 @@ class ImpalaCNN(BaseFeaturesExtractor):
 
     def forward(self, x):
 
-        out = x.float() / 255.0
+        out = x
         out = self.conv_sequences(out)
         out = self.gap(out)
         out = out.view(out.size(0), -1)

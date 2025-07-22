@@ -22,7 +22,6 @@ class ExploreGo(gym.Wrapper):
             else:
                 action = self.env.action_space.sample()
 
-
             next_obs, reward, done, info = self.env.step(action)
 
             if self.explorer is not None:
