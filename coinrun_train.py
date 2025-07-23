@@ -3,11 +3,14 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 from typing import Callable
 import argparse
 from stable_baselines3 import PPO, DQN
-from stable_baselines3.common.vec_env import VecMonitor, VecExtractDictObs
+from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.vec_env import VecMonitor, VecExtractDictObs, VecTransposeImage
 from models.rainbow.rainbow import Rainbow
 from models.rainbow.policies import RainbowPolicy
 from models.generalization.ImpalaCNN import ImpalaCNN
 from models.generalization.ExploreGo import ExploreGo
+from torch.utils.tensorboard import SummaryWriter
+from stable_baselines3.common.evaluation import evaluate_policy
 from procgen import ProcgenEnv
 
 
@@ -24,6 +27,23 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
     return func
 
 
+def make_eval_env(train=False):
+
+    num_levels = 500
+    start_level = 0 if train else 1000
+
+    env = ProcgenEnv(
+        num_envs=1,
+        env_name="coinrun",
+        num_levels=num_levels,
+        start_level=start_level,
+        distribution_mode="hard"
+    )
+    env = VecExtractDictObs(env, "rgb")
+    env = VecTransposeImage(env)
+    env = VecMonitor(env)
+
+    return env
 
 def make_env(train= True, algo='ppo'):
 
@@ -49,6 +69,29 @@ def make_env(train= True, algo='ppo'):
     return env
 
 
+def eval_model(algo, model_name):
+
+    print(f"Evaluando modelo {model_name}")
+
+    env = make_env(train=False, algo=algo)
+
+    if algo == 'ppo':
+
+        model = PPO.load(model_name, env=env)
+    
+    elif algo == 'dqn':
+
+        model = DQN.load(model_name, env=env)
+
+    elif algo == 'rdqn':
+
+        model = Rainbow.load(model_name, env=env)
+
+    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=1e6, return_episode_rewards= False)
+
+    print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
+
+
 def trainPPO(explore, impala):
 
     print("Training PPO")
@@ -60,7 +103,7 @@ def trainPPO(explore, impala):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -84,7 +127,19 @@ def trainPPO(explore, impala):
         tensorboard_log=tensorboard_log
         )
     
-    model.learn(total_timesteps=100e6)
+    print(model.policy)
+
+    eval_callback = EvalCallback(
+        make_eval_env(train=False),
+        best_model_save_path=log_dir,
+        log_path=log_dir,
+        eval_freq=1000000,
+        deterministic=True,
+        render=False,
+        n_eval_episodes=10
+    )
+    
+    model.learn(total_timesteps=100e6, callback=eval_callback)
 
     model_name ="coinrun-ppo"
 
@@ -104,7 +159,7 @@ def trainDQN(explore, impala):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -132,7 +187,17 @@ def trainDQN(explore, impala):
         tensorboard_log=tensorboard_log
     )
 
-    model.learn(total_timesteps=100e6)
+    eval_callback = EvalCallback(
+        make_eval_env(train=False),
+        best_model_save_path=log_dir,
+        log_path=log_dir,
+        eval_freq=1000000,
+        deterministic=True,
+        render=False,
+        n_eval_episodes=10
+    )
+
+    model.learn(total_timesteps=100e6, callback=eval_callback)
     model.save("coinrun-dqn")
 
 
@@ -190,7 +255,18 @@ def trainRainbow(explore, impala):
         tensorboard_log=tensorboard_log
     )
 
-    model.learn(total_timesteps=100e6)
+
+    eval_callback = EvalCallback(
+        make_eval_env(train=False),
+        best_model_save_path=log_dir,
+        log_path=log_dir,
+        eval_freq=1000000,
+        deterministic=True,
+        render=False,
+        n_eval_episodes=10
+    )
+
+    model.learn(total_timesteps=100e6, callback=eval_callback)
     model.save("coinrun-rainbow")
 
 
@@ -200,6 +276,8 @@ def parser():
     parser.add_argument('--algo', type=str, choices=['ppo', 'dqn', 'rdqn'], required=True, help='Algoritmo a entrenar')
     parser.add_argument('--explore', action='store_true', help='Usar ExploreGo')
     parser.add_argument('--impala', action='store_true', help='Usar Impala CNN como extractor de caracteristicas')
+    parser.add_argument('--evaluate', action='store_true', help='Evaluar modelo en entornos distintos a los de entrenamiento')
+    parser.add_argument('--model_name', type=str, help='Nombre del modelo a cargar')
 
     return parser.parse_args()
 
@@ -208,14 +286,25 @@ if __name__ == "__main__":
 
     args = parser()
 
-    if args.algo == 'ppo':
+    if args.evaluate:
 
-        trainPPO(args.explore, args.impala)
+        if not args.model_name:
 
-    elif args.algo == 'dqn':
+            raise ValueError("Debes introducir el nombre del modelo a evaluar")
         
-        trainDQN(args.explore, args.impala)
+        eval_model(args.algo, args.model_name)
 
-    elif args.algo == 'rdqn':
+    else:
 
-        trainRainbow(args.explore, args.impala)
+
+        if args.algo == 'ppo':
+
+            trainPPO(args.explore, args.impala)
+
+        elif args.algo == 'dqn':
+        
+            trainDQN(args.explore, args.impala)
+
+        elif args.algo == 'rdqn':
+
+            trainRainbow(args.explore, args.impala)

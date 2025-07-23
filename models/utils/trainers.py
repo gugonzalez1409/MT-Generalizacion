@@ -233,7 +233,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
             noisy_kwargs={
                 'sigma': 0.2
             }
-            )
+        )
 
 
     model = Rainbow(
