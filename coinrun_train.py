@@ -103,7 +103,7 @@ def trainPPO(explore, impala):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[32, 64, 64],
+                depths=[16, 32, 32],
                 scale=1
             )
         )
