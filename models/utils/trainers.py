@@ -52,7 +52,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
 
     model = PPO(
         'CnnPolicy',
-        learning_rate=linear_schedule(1.75e-4 if impala else 2.5e-4),
+        learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
         n_steps=256,
@@ -166,7 +166,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
     model = RecurrentPPO(
         'CnnLstmPolicy',
         'CnnPolicy',
-        learning_rate=linear_schedule(1.75e-4 if impala else 2.5e-4),
+        learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
         n_steps=256,

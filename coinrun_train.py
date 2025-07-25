@@ -9,7 +9,6 @@ from models.rainbow.rainbow import Rainbow
 from models.rainbow.policies import RainbowPolicy
 from models.generalization.ImpalaCNN import ImpalaCNN
 from models.generalization.ExploreGo import ExploreGo
-from torch.utils.tensorboard import SummaryWriter
 from stable_baselines3.common.evaluation import evaluate_policy
 from procgen import ProcgenEnv
 
