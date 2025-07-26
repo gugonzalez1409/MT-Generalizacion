@@ -7,8 +7,6 @@ from ..generalization.ImpalaCNN import ImpalaCNN
 from models.utils.envs import make_single_env, vectorizedEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
 
-
-
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
 
