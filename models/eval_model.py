@@ -1,17 +1,25 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import gym
+import sys
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-from .utils.reward import customReward
+from utils.reward import customReward
 from stable_baselines3 import PPO, DQN
-from sb3_contrib import QRDQN, RecurrentPPO
+from sb3_contrib import RecurrentPPO
+from rainbow.rainbow import Rainbow
 from nes_py.wrappers import JoypadSpace
-from .utils.envs import EVALUATION_LEVEL_LIST
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-from stable_baselines3.common.atari_wrappers import AtariWrapper
-from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv, VecMonitor, VecVideoRecorder
+from stable_baselines3.common.atari_wrappers import WarpFrame, MaxAndSkipEnv
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv, VecMonitor
+
+EVALUATION_LEVEL_LIST = [
+        "1-1", "1-3", "2-4","3-1", 
+        "3-3", "4-2", "5-2", "5-3", 
+        "6-1", "6-3", "8-1", "8-3", 
+        "7-3"     
+]
 
 """
 Entorno para evaluacion de modelo en SMB
@@ -20,82 +28,79 @@ donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
 """
 
+path = r'./models/statistics/log_dir/RDQN_mario'
+model = Rainbow.load(path)
 
-model_name = {
-    'PPO': PPO,
-    'DQN' : DQN,
-    'RDQN' : QRDQN,
-    'RPPO' : RecurrentPPO
-}
+levels = [f"SuperMarioBros-{lvl}-v0" for lvl in EVALUATION_LEVEL_LIST]
+keys = EVALUATION_LEVEL_LIST.copy()
 
-def evaluate_model(algo_name, model_path, csv_filename, video_prefix, recurrent = False):
-    model = model_name[algo_name].load(model_path)
+csv_filename = 'RDQNevaluation.csv'
 
-    levels = [f"SuperMarioBros-{lvl}-v0" for lvl in EVALUATION_LEVEL_LIST]
-    keys = EVALUATION_LEVEL_LIST.copy()
+with open(csv_filename, 'w') as file:
+    writer = csv.writer(file)
+    writer.writerow(['level', 'avg_reward', 'avg_completion', 'max_completion'])
 
-    with open(csv_filename, 'w') as file:
-        writer = csv.writer(file)
-        writer.writerow(['level', 'avg_reward', 'avg_completion', 'max_completion'])
+    results = {}
+    for i, level in enumerate(levels):
 
-        results = {}
-        for i, level in enumerate(levels):
-            
-            env = gym.make(level)
-            env = JoypadSpace(env, SIMPLE_MOVEMENT)
-            env = customReward(env)
-            env = AtariWrapper(env=env, noop_max=30, frame_skip=4, screen_size=84, terminal_on_life_loss=False, clip_reward=False)
-            env = DummyVecEnv([lambda: env])
-            env = VecFrameStack(env, n_stack=4, channels_order='last')
-            #env = VecVideoRecorder(env, f'{video_prefix}_videos/{level}', record_video_trigger=lambda x: True, name_prefix=f'{video_prefix}_{level}', video_length=20000)
-            env = VecMonitor(env)
+        # excluir niveles 4-4 7-4 8-4
 
-            total_rewards = []
-            completition_rates = []
-            max_completion = 0
-            lvl_length = 3000 # aproximado, en caso de no llegar al final
+        env = gym.make(level)
+        env = JoypadSpace(env, SIMPLE_MOVEMENT)
+        env = customReward(env)
+        env = MaxAndSkipEnv(env, skip=4)
+        env = WarpFrame(env)
+        env = DummyVecEnv([lambda: env])
+        env = VecFrameStack(env, n_stack=4, channels_order='last')
+        #env = VecVideoRecorder(env, f'statistics/videos/{level}', record_video_trigger=lambda x: True, name_prefix=f'PPO{level}', video_length=20000)
+        env = VecMonitor(env)
 
-            try:
-                for j in range(10):
-                    obs = env.reset()
-                    total_reward = 0
-                    max_x_pos = 0
-                    num_envs = 1
-                    episode_starts = np.ones((num_envs,), dtype=bool)
+        total_rewards = []
+        completition_rates = []
+        max_completion = 0
+        lvl_length = 3000 # valor aproximado, en caso de nunca llegar al final
 
-                    while True:
-                        if recurrent:
-                            action, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
-                        else:
-                            action, _ = model.predict(obs, deterministic=True)
-                        obs, reward, done, info = env.step(action)
-                        env.render()
-                        total_reward += reward[0]
-                        max_x_pos = max(max_x_pos, info[0]['x_pos'])
+        try:
+            for j in range(10):
 
-                        if done[0]:
-                            if info[0]['flag_get'] == True:
-                                lvl_length = info[0]['x_pos']
-                                print("x_pos final: ", lvl_length)
-                            break
+                obs = env.reset()
+                total_reward = 0
+                max_x_pos = 0
 
-                    total_rewards.append(total_reward)
-                    completition_rate = (max_x_pos / lvl_length) * 100
-                    completition_rates.append(completition_rate)
-                    max_completion = max(max_completion, completition_rate)
-            finally:
-                env.close()
+                while True:
 
-            avg_reward = sum(total_rewards) / len(total_rewards)
-            avg_completition = sum(completition_rates) / len(completition_rates)
+                    action, _ = model.predict(obs, deterministic=True)
+                    obs, reward, done, info = env.step(action)
+                    total_reward += reward[0]
+                    max_x_pos = max(max_x_pos, info[0]['x_pos'])
 
-            results[keys[i]] = {
-                "avg_reward": avg_reward,
-                "avg_completition": avg_completition,
-                "max_completion": max_completion
-            }
+                    if done[0]:
+                        if info[0]['flag_get'] == True:
+                            lvl_length = info[0]['x_pos']
+                            print("x_pos final: ", lvl_length)
 
-            writer.writerow([level, avg_reward, avg_completition, max_completion])
+                        break
+
+
+                total_rewards.append(total_reward)
+                completition_rate = (max_x_pos / lvl_length) * 100
+                completition_rates.append(completition_rate)
+                max_completion = max(max_completion, completition_rate)
+
+        finally:
+            env.close()
+
+
+        avg_reward = sum(total_rewards) / len(total_rewards)
+        avg_completition = sum(completition_rates) / len(completition_rates)
+
+        results[keys[i]] = {
+            "avg_reward": avg_reward,
+            "avg_completition": avg_completition,
+            "max_completion": max_completion
+        }
+
+        writer.writerow([level, avg_reward, avg_completition, max_completion])
 
     # graficar resultados
     levels_plot = list(results.keys())
@@ -123,13 +128,3 @@ def evaluate_model(algo_name, model_path, csv_filename, video_prefix, recurrent 
     plt.tight_layout()
     plt.savefig(os.path.join(os.path.dirname(csv_filename), 'eval_results.png'))
     plt.show()
-
-if __name__ == "__main__":
-
-    output_dir = 'statistics/evaluations'
-    os.makedirs(output_dir, exist_ok=True)
-    algo_name = 'PPO'
-    model_path = f'./models/statistics/log_dir/{algo_name}_mario'
-    csv_filename = os.path.join(output_dir, f'{algo_name}_evaluation.csv')
-    video_prefix = os.path.join(output_dir, algo_name)
-    evaluate_model(algo_name, model_path, csv_filename, video_prefix)
