@@ -2,7 +2,7 @@
 fitness_criterion     = max
 fitness_threshold     = 999999999
 pop_size              = 100
-reset_on_extinction   = True
+reset_on_extinction   = False
 
 [DefaultGenome]
 activation_default      = sigmoid

@@ -11,7 +11,7 @@ class ICMneural(nn.Module):
         self.action_dim = action_dim
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # f.e. del paper "Curiosity-driven Exploration by Self-supervised Prediction"
+        # f.e. del paper curiosity
         self.feature_extractor = nn.Sequential(
 
             nn.AvgPool2d(2, 2), # reducir a 42, 42 dado que recibe 84, 84
@@ -46,16 +46,13 @@ class ICMneural(nn.Module):
 
         # optimizer y losses
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
-        # loss para modelo directo
         self.loss_fn = nn.MSELoss()
-        # loss para modelo inverso
         self.loss_inv = nn.CrossEntropyLoss()
 
         self.to(self.device)
 
     def forward(self, state, next_state, action):
 
-        # obtiene las caracteristicas de las observaciones
         state_ = self.feature_extractor(state)
         next_state_ = self.feature_extractor(next_state)
 
@@ -113,7 +110,6 @@ class ICMneural(nn.Module):
         curiosity = F.mse_loss(obs_next, _obs_n, reduction='none').mean(dim=1)
         
         action = torch.argmax(curiosity).item()
-        #print(action)
 
         return action
 

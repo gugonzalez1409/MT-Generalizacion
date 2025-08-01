@@ -163,18 +163,17 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 
     model = RecurrentPPO(
         'CnnLstmPolicy',
-        'CnnPolicy',
         learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
-        n_steps=256,
+        n_steps=512,
         batch_size=256,
         clip_range=0.2,
         ent_coef=0.01,
         gamma=0.99,
         gae_lambda=0.95,
         verbose=1,
-        n_epochs=4,
+        n_epochs=3,
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
     )

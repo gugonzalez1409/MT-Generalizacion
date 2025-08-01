@@ -28,13 +28,13 @@ donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
 """
 
-path = r'./models/statistics/log_dir/RDQN_mario'
-model = Rainbow.load(path)
+path = r'./models/statistics/log_dir/RPPO_NoFramestack_mario'
+model = RecurrentPPO.load(path)
 
 levels = [f"SuperMarioBros-{lvl}-v0" for lvl in EVALUATION_LEVEL_LIST]
 keys = EVALUATION_LEVEL_LIST.copy()
 
-csv_filename = 'RDQNevaluation.csv'
+csv_filename = 'RPPOevaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)
@@ -43,7 +43,6 @@ with open(csv_filename, 'w') as file:
     results = {}
     for i, level in enumerate(levels):
 
-        # excluir niveles 4-4 7-4 8-4
 
         env = gym.make(level)
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
@@ -51,7 +50,7 @@ with open(csv_filename, 'w') as file:
         env = MaxAndSkipEnv(env, skip=4)
         env = WarpFrame(env)
         env = DummyVecEnv([lambda: env])
-        env = VecFrameStack(env, n_stack=4, channels_order='last')
+        #env = VecFrameStack(env, n_stack=4, channels_order='last')
         #env = VecVideoRecorder(env, f'statistics/videos/{level}', record_video_trigger=lambda x: True, name_prefix=f'PPO{level}', video_length=20000)
         env = VecMonitor(env)
 
@@ -66,11 +65,15 @@ with open(csv_filename, 'w') as file:
                 obs = env.reset()
                 total_reward = 0
                 max_x_pos = 0
+                lstm_states = None
+                num_envs = 1
 
+                episode_starts = np.ones((num_envs,), dtype=bool)
                 while True:
 
-                    action, _ = model.predict(obs, deterministic=True)
+                    action, lstm_states = model.predict(state=lstm_states, episode_start=episode_starts, deterministic=True)
                     obs, reward, done, info = env.step(action)
+                    episode_starts = done
                     total_reward += reward[0]
                     max_x_pos = max(max_x_pos, info[0]['x_pos'])
 
