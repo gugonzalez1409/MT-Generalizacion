@@ -150,6 +150,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 
     if impala:
         policy_kwargs = dict(
+            enable_critic_lstm=False,
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
@@ -159,7 +160,9 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         )
 
     else:
-        policy_kwargs = {}
+        policy_kwargs = dict(
+            enable_critic_lstm=False,
+        )
 
     model = RecurrentPPO(
         'CnnLstmPolicy',
@@ -177,6 +180,8 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
     )
+
+    print("critic lstm:", model.policy.enable_critic_lstm)
 
     save_freq = max(10e6 // 11, 1)
 
