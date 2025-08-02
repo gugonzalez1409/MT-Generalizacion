@@ -28,7 +28,7 @@ donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
 """
 
-path = r'./models/statistics/log_dir/RPPO_NoFramestack_mario'
+path = 'RPPO_4Framestack_mario'
 model = RecurrentPPO.load(path)
 
 levels = [f"SuperMarioBros-{lvl}-v0" for lvl in EVALUATION_LEVEL_LIST]
@@ -50,7 +50,7 @@ with open(csv_filename, 'w') as file:
         env = MaxAndSkipEnv(env, skip=4)
         env = WarpFrame(env)
         env = DummyVecEnv([lambda: env])
-        #env = VecFrameStack(env, n_stack=4, channels_order='last')
+        env = VecFrameStack(env, n_stack=4, channels_order='last')
         #env = VecVideoRecorder(env, f'statistics/videos/{level}', record_video_trigger=lambda x: True, name_prefix=f'PPO{level}', video_length=20000)
         env = VecMonitor(env)
 
@@ -71,7 +71,7 @@ with open(csv_filename, 'w') as file:
                 episode_starts = np.ones((num_envs,), dtype=bool)
                 while True:
 
-                    action, lstm_states = model.predict(state=lstm_states, episode_start=episode_starts, deterministic=True)
+                    action, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
                     obs, reward, done, info = env.step(action)
                     episode_starts = done
                     total_reward += reward[0]

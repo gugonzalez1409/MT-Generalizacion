@@ -164,7 +164,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
     model = RecurrentPPO(
         'CnnLstmPolicy',
         learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
-        env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
+        env = vectorizedEnv(explore, random, custom, icm, recurrent) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
         n_steps=512,
         batch_size=256,

@@ -69,6 +69,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
         if(random): env = DomainRandom(env, random, render=False)
         if(custom): env = customReward(env)
 
+
         return env
     
     num_envs = 11
