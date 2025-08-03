@@ -1,6 +1,7 @@
 import gym.logger
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+from reward import customReward
 import gym
 import numpy as np
 import neat
@@ -9,6 +10,7 @@ import cv2
 import visualize
 import multiprocessing
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 gym.logger.set_level(40)
@@ -23,12 +25,14 @@ TRAINING_LEVEL_LIST = [
 class fitness(object):
 
     def __init__(self, genome, config):
+        
         self.genome = genome
         self.config = config
         
     def eval(self):
 
         self.env = gym.make('SuperMarioBrosRandomStages-v1', stages=TRAINING_LEVEL_LIST)
+        self.env = customReward(self.env)
         self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
 
         net = neat.nn.FeedForwardNetwork.create(self.genome, self.config)
@@ -42,7 +46,7 @@ class fitness(object):
         while done==False:
             
             obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
-            screen = cv2.resize(obs, (28, 40)) # obs de 28,40 en escala de grises
+            screen = cv2.resize(obs, (28, 40))
             screen = np.ndarray.flatten(screen)
             #self.env.render()
             output = net.activate(screen)
@@ -88,10 +92,10 @@ if __name__ == '__main__':
     pop.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
-    pop.add_reporter(neat.Checkpointer(generation_interval=20))
+    pop.add_reporter(neat.Checkpointer(generation_interval=50))
 
 
-    pe = neat.ParallelEvaluator(multiprocessing.cpu_count()-1, eval_genomes)
+    pe = neat.ParallelEvaluator(8, eval_genomes)
 
     winner = pop.run(pe.evaluate, 200)
 

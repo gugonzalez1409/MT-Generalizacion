@@ -31,7 +31,7 @@ def make_single_env(explore, random, custom, icm):
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
     # grayscale, resize, frameskip
     env = MaxAndSkipEnv(env, skip=4) # frameskip de 4
-    env = WarpFrame(env, width=84, height=84) # grayscale y resize
+    env = WarpFrame(env) # grayscale y resize
 
     if(explore):
         if(icm):
