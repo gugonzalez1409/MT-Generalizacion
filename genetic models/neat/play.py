@@ -7,7 +7,7 @@ import numpy as np
 import neat
 import pickle
 import cv2
-import visualize
+#import visualize
 import multiprocessing
 import warnings
 
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     winner = pop.run(pe.evaluate, 200)
 
-    visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
+    """visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
     visualize.plot_species(stats, view=True, filename="feedforward-speciation.svg")
 
     with open("winner-feedforwars","wb") as filename:
@@ -111,4 +111,4 @@ if __name__ == '__main__':
     visualize.draw_net(config, winner, view=True, node_names=node_names,
                        filename="winner-feedforward.gv")
     visualize.draw_net(config, winner, view=True, node_names=node_names,
-                       filename="winner-feedforward-enabled-pruned.gv", prune_unused=True)
+                       filename="winner-feedforward-enabled-pruned.gv", prune_unused=True)"""
