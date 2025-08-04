@@ -8,7 +8,6 @@ from stable_baselines3.common.vec_env import VecMonitor, VecExtractDictObs, VecT
 from models.rainbow.rainbow import Rainbow
 from models.rainbow.policies import RainbowPolicy
 from models.generalization.ImpalaCNN import ImpalaCNN
-from models.generalization.ExploreGo import ExploreGo
 from stable_baselines3.common.evaluation import evaluate_policy
 from procgen import ProcgenEnv
 
@@ -125,8 +124,6 @@ def trainPPO(explore, impala):
         verbose=1,
         tensorboard_log=tensorboard_log
         )
-    
-    print(model.policy)
 
     eval_callback = EvalCallback(
         make_eval_env(train=False),
@@ -138,7 +135,7 @@ def trainPPO(explore, impala):
         n_eval_episodes=10
     )
     
-    model.learn(total_timesteps=100e6, callback=eval_callback)
+    model.learn(total_timesteps=50e6, callback=eval_callback)
 
     model_name ="coinrun-ppo"
 
@@ -196,7 +193,7 @@ def trainDQN(explore, impala):
         n_eval_episodes=10
     )
 
-    model.learn(total_timesteps=100e6, callback=eval_callback)
+    model.learn(total_timesteps=50e6, callback=eval_callback)
     model.save("coinrun-dqn")
 
 
@@ -265,7 +262,7 @@ def trainRainbow(explore, impala):
         n_eval_episodes=10
     )
 
-    model.learn(total_timesteps=100e6, callback=eval_callback)
+    model.learn(total_timesteps=50e6, callback=eval_callback)
     model.save("coinrun-rainbow")
 
 

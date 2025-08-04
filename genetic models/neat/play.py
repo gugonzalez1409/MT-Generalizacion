@@ -2,12 +2,13 @@ import gym.logger
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from reward import customReward
+import gym_super_mario_bros
 import gym
 import numpy as np
 import neat
 import pickle
 import cv2
-#import visualize
+import visualize
 import multiprocessing
 import warnings
 
@@ -95,11 +96,11 @@ if __name__ == '__main__':
     pop.add_reporter(neat.Checkpointer(generation_interval=50))
 
 
-    pe = neat.ParallelEvaluator(8, eval_genomes)
+    pe = neat.ParallelEvaluator(4, eval_genomes)
 
     winner = pop.run(pe.evaluate, 200)
 
-    """visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
+    visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
     visualize.plot_species(stats, view=True, filename="feedforward-speciation.svg")
 
     with open("winner-feedforwars","wb") as filename:
@@ -111,4 +112,4 @@ if __name__ == '__main__':
     visualize.draw_net(config, winner, view=True, node_names=node_names,
                        filename="winner-feedforward.gv")
     visualize.draw_net(config, winner, view=True, node_names=node_names,
-                       filename="winner-feedforward-enabled-pruned.gv", prune_unused=True)"""
+                       filename="winner-feedforward-enabled-pruned.gv", prune_unused=True)
