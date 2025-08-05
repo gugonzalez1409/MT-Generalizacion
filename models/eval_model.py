@@ -28,13 +28,13 @@ donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
 """
 
-path = 'RPPO_4Framestack_mario'
-model = RecurrentPPO.load(path)
+path = 'RDQN_mario'
+model = Rainbow.load(path)
 
 levels = [f"SuperMarioBros-{lvl}-v0" for lvl in EVALUATION_LEVEL_LIST]
 keys = EVALUATION_LEVEL_LIST.copy()
 
-csv_filename = 'RPPOevaluation.csv'
+csv_filename = 'RDQNevaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)
@@ -68,10 +68,10 @@ with open(csv_filename, 'w') as file:
                 lstm_states = None
                 num_envs = 1
 
-                episode_starts = np.ones((num_envs,), dtype=bool)
+                #episode_starts = np.ones((num_envs,), dtype=bool)
                 while True:
 
-                    action, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
+                    action, lstm_states = model.predict(obs, deterministic=True)
                     obs, reward, done, info = env.step(action)
                     episode_starts = done
                     total_reward += reward[0]
@@ -95,10 +95,12 @@ with open(csv_filename, 'w') as file:
 
 
         avg_reward = sum(total_rewards) / len(total_rewards)
+        std_reward = np.std(total_rewards)
         avg_completition = sum(completition_rates) / len(completition_rates)
 
         results[keys[i]] = {
             "avg_reward": avg_reward,
+            "std_reward": std_reward,
             "avg_completition": avg_completition,
             "max_completion": max_completion
         }
@@ -110,13 +112,14 @@ with open(csv_filename, 'w') as file:
     avg_rewards = [results[l]['avg_reward'] for l in levels_plot]
     avg_completions = [results[l]['avg_completition'] for l in levels_plot]
     max_completions = [results[l]['max_completion'] for l in levels_plot]
+    std_rewards = [results[l]['std_reward'] for l in levels_plot]
 
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
-    plt.bar(levels_plot, avg_rewards, color='blue')
+    plt.bar(levels_plot, avg_rewards, yerr=std_rewards, capsize=5, color='blue', alpha=0.8)
     plt.xticks(rotation=90)
     plt.ylabel('Avg reward')
-    plt.title('Recompensa promedio por nivel')
+    plt.title('Recompensa promedio por nivel\n(con desviación estándar)')
 
     plt.subplot(1, 2, 2)
     x = np.arange(len(levels_plot))

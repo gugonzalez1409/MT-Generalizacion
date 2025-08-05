@@ -31,6 +31,7 @@ enabled_default         = True
 enabled_mutate_rate     = 0.2
 
 feed_forward            = False
+recurrent		= True
 initial_connection      = partial_nodirect 0.5
 
 node_add_prob           = 0.5

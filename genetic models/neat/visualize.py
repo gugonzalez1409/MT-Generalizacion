@@ -5,7 +5,6 @@ import numpy as np
 
 
 def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
-    """ Plots the population's average and best fitness. """
     if plt is None:
         warnings.warn("This display is not available due to a missing optional dependency (matplotlib)")
         return
@@ -15,13 +14,13 @@ def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
     avg_fitness = np.array(statistics.get_fitness_mean())
     stdev_fitness = np.array(statistics.get_fitness_stdev())
 
-    plt.plot(generation, avg_fitness, 'b-', label="average")
-    plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
-    plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
-    plt.plot(generation, best_fitness, 'r-', label="best")
+    plt.plot(generation, avg_fitness, 'b-', label="promedio")
+    plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 std")
+    plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 std")
+    plt.plot(generation, best_fitness, 'r-', label="mejor individuo")
 
-    plt.title("Population's average and best fitness")
-    plt.xlabel("Generations")
+    plt.title("Promedio de population y mejor fitness")
+    plt.xlabel("Generaciones")
     plt.ylabel("Fitness")
     plt.grid()
     plt.legend(loc="best")
@@ -36,7 +35,7 @@ def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
 
 
 def plot_spikes(spikes, view=False, filename=None, title=None):
-    """ Plots the trains for a single spiking neuron. """
+    
     t_values = [t for t, I, v, u, f in spikes]
     v_values = [v for t, I, v, u, f in spikes]
     u_values = [u for t, I, v, u, f in spikes]
@@ -85,7 +84,7 @@ def plot_spikes(spikes, view=False, filename=None, title=None):
 
 
 def plot_species(statistics, view=False, filename='speciation.svg'):
-    """ Visualizes speciation throughout evolution. """
+    
     if plt is None:
         warnings.warn("This display is not available due to a missing optional dependency (matplotlib)")
         return
@@ -97,9 +96,9 @@ def plot_species(statistics, view=False, filename='speciation.svg'):
     fig, ax = plt.subplots()
     ax.stackplot(range(num_generations), *curves)
 
-    plt.title("Speciation")
-    plt.ylabel("Size per Species")
-    plt.xlabel("Generations")
+    plt.title("Especiación")
+    plt.ylabel("Tamaño por especie")
+    plt.xlabel("Generaciones")
 
     plt.savefig(filename)
 
@@ -111,7 +110,7 @@ def plot_species(statistics, view=False, filename='speciation.svg'):
 
 def draw_net(config, genome, view=False, filename=None, node_names=None, show_disabled=True, prune_unused=False,
              node_colors=None, fmt='svg'):
-    """ Receives a genome and draws a neural network with arbitrary topology. """
+    
     # Attributes for network nodes.
     if graphviz is None:
         warnings.warn("This display is not available due to a missing optional dependency (graphviz)")

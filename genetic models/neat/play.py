@@ -11,32 +11,31 @@ import cv2
 import visualize
 import multiprocessing
 import warnings
+from ExploreGo import ExploreGo
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 gym.logger.set_level(40)
 
-TRAINING_LEVEL_LIST = [
-        "1-2", "1-4", "2-1", "2-3",       
-        "3-2", "3-4", "4-1", "4-3",      
-        "5-1", "5-4", "6-2", "6-4",       
-        "7-1", "8-2",
-]
+TRAINING_LEVEL_LIST = ["1-2", "1-4", "2-1", "2-3","3-2", "3-4", "4-1", "4-3","5-1", "5-4", "6-2", "6-4","7-1", "8-2"]
 
 class fitness(object):
 
     def __init__(self, genome, config):
-        
+
         self.genome = genome
         self.config = config
         
     def eval(self):
 
-        self.env = gym.make('SuperMarioBrosRandomStages-v1', stages=TRAINING_LEVEL_LIST)
+        lvl = np.random.choice(TRAINING_LEVEL_LIST)
+        env_id = f'SuperMarioBros-{lvl}-v1'
+        self.env = gym.make(env_id)
         self.env = customReward(self.env)
+        #self.env = ExploreGo(self.env, exploration_steps=200, explorer=None)
         self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
 
-        net = neat.nn.FeedForwardNetwork.create(self.genome, self.config)
+        net = neat.nn.RecurrentNetwork.create(self.genome, self.config)
 
         obs = self.env.reset()
         done = False
@@ -95,15 +94,14 @@ if __name__ == '__main__':
     pop.add_reporter(stats)
     pop.add_reporter(neat.Checkpointer(generation_interval=50))
 
-
-    pe = neat.ParallelEvaluator(4, eval_genomes)
+    pe = neat.ParallelEvaluator(multiprocessing.cpu_count()-1, eval_genomes)
 
     winner = pop.run(pe.evaluate, 200)
 
     visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
     visualize.plot_species(stats, view=True, filename="feedforward-speciation.svg")
 
-    with open("winner-feedforwars","wb") as filename:
+    with open("winner-feedforward","wb") as filename:
         pickle.dump(winner,filename)
 
     node_names = {-1: 'x', -2: 'dx', -3: 'theta', -4: 'dtheta', 0: 'control'}

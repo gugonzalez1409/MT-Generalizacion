@@ -7,3 +7,4 @@ pruebasRPPO
 procgen_models
 coinrun_test.py
 rl-baselines3-zoo
+models/RDQN_mario.zip
