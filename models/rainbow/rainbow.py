@@ -44,7 +44,8 @@ class Rainbow(QRDQN):
         policy_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
         seed: Optional[int] = None,
-        device: Union[th.device, str] = 'auto'
+        device: Union[th.device, str] = 'auto',
+        _init_setup_model: bool = True
             
     ) -> None:
         
@@ -71,6 +72,7 @@ class Rainbow(QRDQN):
             create_eval_env=create_eval_env,
             seed=seed,
             optimize_memory_usage=optimize_memory_usage,
+            _init_setup_model=_init_setup_model,
         )
 
 

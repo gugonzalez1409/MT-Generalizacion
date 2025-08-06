@@ -113,9 +113,11 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
         batch_size=64,
         learning_starts=10000,
         exploration_final_eps= 0.05,
-        exploration_fraction=0.2,
+        exploration_fraction=0.1,
+        target_update_interval=1000,
         verbose=1,
         train_freq=4,
+        gradient_steps=1,
         tensorboard_log = tensorboard_log
         )
     
