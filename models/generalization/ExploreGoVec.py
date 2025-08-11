@@ -8,16 +8,15 @@ class ExploreGoVec(VecEnvWrapper):
     def __init__(self, venv, K: int = 200, explorer: Optional[torch.nn.Module] = None):
         super().__init__(venv)
         self.K = K
-        self.random_steps_left = np.zeros(self.num_envs, dtype=np.int32)
         self.explorer = explorer
+        self.random_steps_left = np.random.randint(0, self.K + 1, self.num_envs)
         self.current_obs = None
 
     def reset(self):
         
         obs = self.venv.reset()
         self.current_obs = obs
-        for i in range(self.num_envs):
-            self.random_steps_left[i] = np.random.randint(0, self.K + 1)
+        self.random_steps_left = np.random.randint(0, self.K + 1, self.num_envs)
 
         return obs
 
@@ -37,7 +36,6 @@ class ExploreGoVec(VecEnvWrapper):
                         final_actions[i] = self.explorer.select_action(obs_i)
                 else:
                     final_actions[i] = self.action_space.sample()
-                
                 self.random_steps_left[i] -= 1
         
         self.venv.step_async(final_actions)

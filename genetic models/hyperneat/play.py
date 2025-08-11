@@ -1,62 +1,45 @@
-
 import gym
 import neat
 import pickle
 import logging
+import numpy as np
+import multiprocessing as mp
 import gym_super_mario_bros
+import matplotlib.pyplot as plt
+from reward import customReward
 from gym_utils import SMBRamWrapper
 from nes_py.wrappers import JoypadSpace
 from pureples.shared.visualize import draw_net
 from pureples.shared.substrate import Substrate
-from pureples.shared.gym_runner import run_hyper
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from pureples.hyperneat.hyperneat import create_phenotype_network
-from hyperneat_mario import run_hyper_mario
-import matplotlib.pyplot as plt
-#from gym.wrappers import GrayScaleObservation, NormalizeObservation, FlattenObservation
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
-
-"""
-Definicion del substrate
-
-"""
-
+# Definicion del substrate
 input_width, input_height = 13, 16
-coord_input = []
-for y in range(input_height):
-    for x in range(input_width):
-        x_coord = (x / (input_width - 1)) * 2 - 1
-        y_coord = (y / (input_height - 1)) * 2 - 1
 
-        coord_input.append((x_coord, y_coord))
+input_coords = [
+    (x,y)
+    for x in np.linspace(-1,1, input_width)
+    for y in np.linspace(-1, 1, input_height)
+]
 
-#coord_ocultas = []
-#size_ocultas = [(4,4)]
+hidden_coords = [
+    [(x,y) for x in np.linspace(1,-1) for y in np.linspace(1,-1)]
+]
 
-"""for layer_idx, (width, height) in enumerate(size_ocultas):
-    layer = []
-    for y in range(height):
-        for x in range(width):
-            x_coord = (x/(width - 1 )) * 2 - 1
-            y_coord = (y/(height -1 )) * 2 - 1
-            layer.append((x_coord, y_coord))
-    coord_ocultas.append(layer)"""
+output_coords = [
+    (x,y)
+    for x in np.linspace(-1, 1, 7)
+    for y in np.linspace(-1,1, 1)
+]
 
-#coord_output = [(i / (len(SIMPLE_MOVEMENT) - 1) * 2 - 1, 1.0) for i in range(len(SIMPLE_MOVEMENT))]
-
-coord_output = [(x, y) for x, y in coord_input]
-
-substrate = Substrate(coord_input, coord_output)
-
-"""
-Crea el entorno de gym en escala de grises
-
-"""
+substrate = Substrate(input_coords, output_coords, hidden_coords)
 
 def make_env():
 
     env = gym.make('SuperMarioBros-1-1-v0')
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
+    env = customReward(env)
     x0 = 0
     x1 = 16
     y0 = 0
@@ -64,21 +47,92 @@ def make_env():
     n_stack = 1
     n_skip = 1
     env = SMBRamWrapper(env, [x0, x1, y0, y1], n_stack=n_stack, n_skip=n_skip)
-
-    print("obs shape: ", env.observation_space.shape)
-
     return env
 
 
+def eval_genome_fitness(genome, config):
 
-gens = 150 # numero de generaciones
+    local_env = make_env()
+    
+    cppn = neat.nn.FeedForwardNetwork.create(genome, config)
+    net = create_phenotype_network(cppn, substrate)
+    
+    fitnesses = []
+    for _ in range(config.trials):
+        ob = local_env.reset()
+        net.reset()
+        total_reward = 0
+        stag_counter = 0
+        last_x_pos = 0
+
+        for _ in range(config.max_steps):
+            for _ in range(config.activations):
+                o = net.activate(ob.flatten())
+            action = np.argmax(o)
+            ob, reward, done, info = local_env.step(action)
+            total_reward += reward
+
+            current_x_pos = info['x_pos']
+
+            if current_x_pos <= last_x_pos:
+                stag_counter += 1
+            else:
+                stag_counter = 0
+                last_x_pos = current_x_pos
+            
+            if done or stag_counter > 100:
+                break
+        fitnesses.append(total_reward)
+    
+    local_env.close()
+
+    return np.array(fitnesses).mean()
+
+
+def ini_pop(state, stats, config, output):
+    """
+    Inicializa la poblacion y le añade el reporte de estadisticas.
+    """
+    pop = neat.population.Population(config, state)
+    if output:
+        pop.add_reporter(neat.reporting.StdOutReporter(True))
+    pop.add_reporter(stats)
+    return pop
+
+
+def run_hyper_parallel(gens, max_steps, config, activations, max_trials=100, output=True):
+
+    config.max_steps = max_steps
+    config.activations = activations
+    config.activation = 'sigmoid'
+    config.trials = 1
+    
+
+    pe = neat.ParallelEvaluator(mp.cpu_count(), eval_genome_fitness)
+    
+   
+    stats_one = neat.statistics.StatisticsReporter()
+    pop = ini_pop(None, stats_one, config, output)
+    winner_one = pop.run(pe.evaluate, gens)
+    
+    stats_ten = neat.statistics.StatisticsReporter()
+    pop = ini_pop((pop.population, pop.species, 0), stats_ten, config, output)
+    config.trials = 10
+    winner_ten = pop.run(pe.evaluate, gens)
+    
+    if max_trials == 0:
+        return winner_ten, (stats_one, stats_ten)
+    
+    stats_hundred = neat.statistics.StatisticsReporter()
+    pop = ini_pop((pop.population, pop.species, 0), stats_hundred, config, output)
+    config.trials = max_trials
+    winner_hundred = pop.run(pe.evaluate, gens)
+    
+    return winner_hundred, (stats_one, stats_ten, stats_hundred)
+
+gens = 150
 max_steps = 3000
-activations = 1 # activaciones de red CPPN
-
-"""
-Creacion del config (NEAT-Python)
-
-"""
+activations = 1
 
 CONFIG = neat.Config(
     neat.DefaultGenome,
@@ -88,26 +142,20 @@ CONFIG = neat.Config(
     'hyper-neat-config-feedforward'
 )
 
-
-def run(gens, env):
-
-    winner, stats = run_hyper_mario(
-        gens=gens, env=env, max_steps=max_steps, config= CONFIG, substrate=substrate, activations=activations, input_shape=(13,16))
-
+def run(gens):
+    winner, stats = run_hyper_parallel(
+        gens=gens, max_steps=max_steps, config=CONFIG, activations=activations)
     return winner, stats
 
 if __name__ == '__main__':
-
     LOGGER = logging.getLogger()
     LOGGER.setLevel(logging.INFO)
 
-
-    WINNER, STATS = run(150, make_env())
-
-    #cppn = neat.nn.FeedForwardNetwork.create(WINNER, CONFIG)
-    #NET = create_phenotype_network(cppn, substrate)
-    #draw_net(cppn, filename="hyperneat_mario_cppn")
-    #draw_net(NET, filename="hyperneat_mario_winner")
-    #with open('hyperneat_mario_cppn.pkl', 'wb') as output:
-    #    pickle.dump(cppn, output, pickle.HIGHEST_PROTOCOL)
-
+    WINNER, STATS = run(150)
+    
+    cppn = neat.nn.FeedForwardNetwork.create(WINNER, CONFIG)
+    NET = create_phenotype_network(cppn, substrate)
+    draw_net(cppn, filename="hyperneat_mario_cppn")
+    draw_net(NET, filename="hyperneat_mario_winner")
+    with open('hyperneat_mario_cppn.pkl', 'wb') as output:
+        pickle.dump(cppn, output, pickle.HIGHEST_PROTOCOL)
