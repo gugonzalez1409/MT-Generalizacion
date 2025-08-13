@@ -40,7 +40,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -96,7 +96,7 @@ def trainDQN(explore, random, custom, vectorized, impala, icm):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -156,7 +156,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -164,15 +164,16 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
     else:
         policy_kwargs = dict(
             enable_critic_lstm=False,
+            shared_lstm=True,
         )
 
     model = RecurrentPPO(
         'CnnLstmPolicy',
-        learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
+        learning_rate=linear_schedule(1.75e-4 if impala else 7.5e-5),
         env = vectorizedEnv(explore, random, custom, icm, recurrent) if vectorized else make_single_env(explore, random, custom),
         policy_kwargs=policy_kwargs,
-        n_steps=2048,
-        batch_size=512,
+        n_steps=512,
+        batch_size=264,
         clip_range=0.2,
         ent_coef=0.01,
         gamma=0.99,

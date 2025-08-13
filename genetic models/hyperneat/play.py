@@ -15,23 +15,14 @@ from pureples.hyperneat.hyperneat import create_phenotype_network
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 # Definicion del substrate
-input_width, input_height = 13, 16
+input_width, input_height = 16, 13
 
-input_coords = [
-    (x,y)
-    for x in np.linspace(-1,1, input_width)
-    for y in np.linspace(-1, 1, input_height)
-]
+input_coords = [(x,y) for x in np.linspace(-1,1, input_width) for y in np.linspace(-1, 1, input_height)]
 
-hidden_coords = [
-    [(x,y) for x in np.linspace(1,-1) for y in np.linspace(1,-1)]
-]
+hidden_coords = [[(x,y) for x in np.linspace(1,-1, 5) for y in np.linspace(1,-1, 5)]]
 
-output_coords = [
-    (x,y)
-    for x in np.linspace(-1, 1, 7)
-    for y in np.linspace(-1,1, 1)
-]
+output_coords = [(x, 0.0) for x in np.linspace(-1, 1, len(SIMPLE_MOVEMENT))]
+
 
 substrate = Substrate(input_coords, output_coords, hidden_coords)
 
@@ -68,7 +59,9 @@ def eval_genome_fitness(genome, config):
         for _ in range(config.max_steps):
             for _ in range(config.activations):
                 o = net.activate(ob.flatten())
+
             action = np.argmax(o)
+
             ob, reward, done, info = local_env.step(action)
             total_reward += reward
 
@@ -132,7 +125,7 @@ def run_hyper_parallel(gens, max_steps, config, activations, max_trials=100, out
 
 gens = 150
 max_steps = 3000
-activations = 1
+activations = len(hidden_coords) + 2
 
 CONFIG = neat.Config(
     neat.DefaultGenome,
