@@ -60,21 +60,18 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
         env = WarpFrame(env, width=84, height=84) # grayscale y resize
         if(random): env = DomainRandom(env, random, render=False)
         if(custom): env = customReward(env)
+        if explore is not None:
+            explorer = None
+            if icm:
+                print("Using ICM as explorer")
+                explorer = ICMneural(obs_shape=env.observation_space.shape, action_dim=env.action_space.n)
+            
+            env = ExploreGo(env=env, exploration_steps=explore, explorer=explorer)
 
         return env
     
-    num_envs = 11
+    num_envs = 4 if explore else 11
     env = VecMonitor(SubprocVecEnv([lambda: make_env(random, custom) for _ in range(num_envs)]), filename=log_dir)
-
-    if(explore is not None):
-        if icm:
-            print("Using ICM as explorer")
-            explorer = ICMneural(obs_shape=env.observation_space.shape, action_dim=env.action_space.n) 
-        else:
-            print("Using random actions as explorer")
-            explorer = None
-        
-        env = ExploreGoVec(env, explore, explorer=explorer)
 
     if not recurrent:
         env = VecFrameStack(env, n_stack=4, channels_order='last')
