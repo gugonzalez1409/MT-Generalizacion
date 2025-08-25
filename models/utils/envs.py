@@ -26,7 +26,6 @@ Funciones de creacion de entorno SMB
 """
 
 def make_single_env(explore, random, custom, icm):
-    """Entorno simple para SMB"""
 
     env = gym.make('SuperMarioBrosRandomStages-v1', stages= TRAINING_LEVEL_LIST)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
@@ -51,7 +50,7 @@ def make_single_env(explore, random, custom, icm):
 
 
 def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
-    """Entorno vectorizado a numero de cores de CPU"""
+
     def make_env(random, custom):
 
         env = gym.make('SuperMarioBrosRandomStages-v1', stages= TRAINING_LEVEL_LIST)

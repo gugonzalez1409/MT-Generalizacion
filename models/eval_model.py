@@ -4,6 +4,7 @@ import gym
 import csv
 import numpy as np
 import pandas as pd
+import time
 import seaborn as sns
 import matplotlib.pyplot as plt
 from .utils.reward import customReward
@@ -14,6 +15,14 @@ from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import WarpFrame, MaxAndSkipEnv
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv, VecMonitor, VecTransposeImage
+
+
+"""
+Entorno para evaluacion de modelo en SMB
+el agente tiene 10 intentos a cada nivel del juego
+donde se mide la recompensa obtenida y cuanto del nivel se logró completar
+
+"""
 
 # 
 EVALUATION_LEVEL_LIST = ['1-1', '1-3', '2-4', '3-1','3-3', '4-2', '5-2', '5-3', '6-1', '6-3', '8-1', '7-3', '8-3']
@@ -53,20 +62,14 @@ stageLengthMap = {
     (8, 3): 3664,
 }
 
-"""
-Entorno para evaluacion de modelo en SMB
-el agente tiene 10 intentos a cada nivel del juego
-donde se mide la recompensa obtenida y cuanto del nivel se logró completar
 
-"""
-
-path = 'models/RDQN_random_impala_mario'
+path = 'models/RDQN_explore_random_impala_mario'
 model = Rainbow.load(path)
 
 levels = [f"SuperMarioBros-{lvl}-v1" for lvl in EVALUATION_LEVEL_LIST]
 keys = EVALUATION_LEVEL_LIST.copy()
 
-csv_filename = 'RDQNrandomIMPALA_evaluation.csv'
+csv_filename = 'RDQNrandom_evaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)
@@ -112,6 +115,7 @@ with open(csv_filename, 'w') as file:
 
                     action, _ = model.predict(obs, deterministic=False)
                     obs, reward, done, info = env.step(action)
+                    #time.sleep(0.1)
                     episode_starts = done
                     total_reward += reward[0]
                     max_x_pos = max(max_x_pos, info[0]['x_pos'])
@@ -121,8 +125,7 @@ with open(csv_filename, 'w') as file:
                     if done[0]:
                         if info[0]['flag_get'] == True:
                             lvl_length = info[0]['x_pos']
-                            print("x_pos final: ", lvl_length)
-                            print("nivel: ", keys[i])
+                            print("nivel completado: ", keys[i])
 
                         break
 

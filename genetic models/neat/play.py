@@ -46,7 +46,7 @@ class fitness(object):
         while done==False:
             
             obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
-            screen = cv2.resize(obs, (28, 40))
+            screen = cv2.resize(obs, (32, 32))
             screen = np.ndarray.flatten(screen)
             #self.env.render()
             output = net.activate(screen)
