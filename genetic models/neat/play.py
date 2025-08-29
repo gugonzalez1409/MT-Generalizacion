@@ -11,7 +11,6 @@ import cv2
 import visualize
 import multiprocessing
 import warnings
-from ExploreGo import ExploreGo
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
