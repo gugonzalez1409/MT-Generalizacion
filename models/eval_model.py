@@ -15,6 +15,7 @@ from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import WarpFrame, MaxAndSkipEnv
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv, VecMonitor, VecTransposeImage
+from .utils.envs import vectorizedEnv
 
 
 """
@@ -62,11 +63,17 @@ stageLengthMap = {
     (8, 3): 3664,
 }
 
+if __name__ == "__main__":
 
-path = 'models/RDQN_explore_random_impala_mario'
-model = Rainbow.load(path)
+    path = 'models/PPO_mario'
+    env = vectorizedEnv(explore=False, random=False, custom=True, icm=False, recurrent=False)
+    model = PPO.load(path, env)
+    model.learn(total_timesteps=75e6)
+    model.save("PPO_mario150m")
 
-levels = [f"SuperMarioBros-{lvl}-v1" for lvl in EVALUATION_LEVEL_LIST]
+
+
+"""levels = [f"SuperMarioBros-{lvl}-v1" for lvl in EVALUATION_LEVEL_LIST]
 keys = EVALUATION_LEVEL_LIST.copy()
 
 csv_filename = 'RDQNrandom_evaluation.csv'
@@ -204,4 +211,4 @@ axes[1].legend()
 
 plt.tight_layout()
 plt.savefig(os.path.join(os.path.dirname(csv_filename), 'eval_results.png'))
-plt.show()
+plt.show()"""
