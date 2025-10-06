@@ -63,20 +63,14 @@ stageLengthMap = {
     (8, 3): 3664,
 }
 
-if __name__ == "__main__":
-
-    path = 'models/PPO_mario'
-    env = vectorizedEnv(explore=False, random=False, custom=True, icm=False, recurrent=False)
-    model = PPO.load(path, env)
-    model.learn(total_timesteps=75e6)
-    model.save("PPO_mario150m")
+path = 'models/RDQN_explore_random_impala_mario.zip'
+model = Rainbow.load(path)
 
 
-
-"""levels = [f"SuperMarioBros-{lvl}-v1" for lvl in EVALUATION_LEVEL_LIST]
+levels = [f"SuperMarioBros-{lvl}-v1" for lvl in TRAINING_LEVEL_LIST]
 keys = EVALUATION_LEVEL_LIST.copy()
 
-csv_filename = 'RDQNrandom_evaluation.csv'
+csv_filename = 'RainbowIMPALAEXPLORE_evaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)
@@ -114,10 +108,10 @@ with open(csv_filename, 'w') as file:
                 obs = env.reset()
                 total_reward = 0
                 max_x_pos = 0
-                #lstm_states = None
+                lstm_states = None
                 num_envs = 1
 
-                #episode_starts = np.ones((num_envs,), dtype=bool)
+                episode_starts = np.ones((num_envs,), dtype=bool)
                 while True:
 
                     action, _ = model.predict(obs, deterministic=False)
@@ -211,4 +205,4 @@ axes[1].legend()
 
 plt.tight_layout()
 plt.savefig(os.path.join(os.path.dirname(csv_filename), 'eval_results.png'))
-plt.show()"""
+plt.show()

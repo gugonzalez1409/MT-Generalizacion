@@ -101,7 +101,7 @@ def trainPPO(explore, impala):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -214,7 +214,7 @@ def trainRainbow(explore, impala):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )

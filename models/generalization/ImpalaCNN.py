@@ -11,9 +11,9 @@ class ResidualBlock(nn.Module):
         # bloque residual con batch normalization
         super(ResidualBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-        self.norm1 = nn.GroupNorm(num_groups=8, num_channels=in_channels)
+        self.norm1 = nn.GroupNorm(num_groups=16, num_channels=in_channels)
         self.conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-        self.norm2 = nn.GroupNorm(num_groups=8, num_channels=in_channels)
+        self.norm2 = nn.GroupNorm(num_groups=16, num_channels=in_channels)
 
     def forward(self, x):
 
@@ -53,7 +53,7 @@ class ConvSequence(nn.Module):
 
 class ImpalaCNN(BaseFeaturesExtractor):
 
-    def __init__(self, observation_spaces: gym.spaces.Box, features_dim = 512, depths=[16, 32, 32], scale = 1):
+    def __init__(self, observation_spaces: gym.spaces.Box, features_dim = 512, depths=[32, 64, 64], scale = 1):
 
         super().__init__(observation_spaces, features_dim=features_dim)
         

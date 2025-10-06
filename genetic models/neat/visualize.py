@@ -2,9 +2,29 @@ import warnings
 import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
+import graphviz
+import matplotlib.pyplot as plt
+import numpy as np
 
 
-def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
+def simple_moving_average(data, window_size):
+
+    if window_size <= 1:
+        return np.array(data)
+    data = np.array(data)
+    
+    smoothed = np.zeros_like(data, dtype=float)
+    
+    for i in range(len(data)):
+        start_idx = max(0, i - window_size + 1)
+        smoothed[i] = np.mean(data[start_idx:i+1])
+    
+    return smoothed
+
+
+def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg', smooth_best=False, window_size=5):
+    
     if plt is None:
         warnings.warn("This display is not available due to a missing optional dependency (matplotlib)")
         return
@@ -14,16 +34,24 @@ def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
     avg_fitness = np.array(statistics.get_fitness_mean())
     stdev_fitness = np.array(statistics.get_fitness_stdev())
 
-    plt.plot(generation, avg_fitness, 'b-', label="promedio")
+
+    if smooth_best:
+        best_fitness_smoothed = simple_moving_average(best_fitness, window_size)
+        plt.plot(generation, best_fitness, 'r:', alpha=0.5)
+        plt.plot(generation, best_fitness_smoothed, 'r-', linewidth=2, label=f"Mejor")
+    else:
+        plt.plot(generation, best_fitness, 'r-', label="Mejor")
+
+    plt.plot(generation, avg_fitness, 'b-', label="Promedio")
     plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 std")
     plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 std")
-    plt.plot(generation, best_fitness, 'r-', label="mejor individuo")
 
-    plt.title("Promedio de population y mejor fitness")
+    plt.title("Promedio de población")
     plt.xlabel("Generaciones")
     plt.ylabel("Fitness")
     plt.grid()
     plt.legend(loc="best")
+    
     if ylog:
         plt.gca().set_yscale('linear')
 
@@ -33,6 +61,7 @@ def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
 
     plt.close()
 
+# plot_stats(statistics, smooth_best=True, window_size=10, view=True)
 
 def plot_spikes(spikes, view=False, filename=None, title=None):
     

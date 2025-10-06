@@ -69,7 +69,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
 
         return env
     
-    num_envs = 4 if explore else 11
+    num_envs = 11
     env = VecMonitor(SubprocVecEnv([lambda: make_env(random, custom) for _ in range(num_envs)]), filename=log_dir)
 
     if not recurrent:

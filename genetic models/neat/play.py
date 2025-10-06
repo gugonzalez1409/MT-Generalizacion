@@ -1,16 +1,15 @@
-import gym.logger
-from nes_py.wrappers import JoypadSpace
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-from reward import customReward
-import gym_super_mario_bros
+import cv2
 import gym
-import numpy as np
 import neat
 import pickle
-import cv2
-import visualize
-import multiprocessing
 import warnings
+import visualize
+import gym.logger
+import numpy as np
+import multiprocessing
+import gym_super_mario_bros
+from nes_py.wrappers import JoypadSpace
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -21,59 +20,79 @@ TRAINING_LEVEL_LIST = ["1-2", "1-4", "2-1", "2-3","3-2", "3-4", "4-1", "4-3","5-
 class fitness(object):
 
     def __init__(self, genome, config):
-
+        
         self.genome = genome
         self.config = config
         
     def eval(self):
 
+        total_fitness = 0
+        num_levels = 1
+
+        for _ in range(num_levels):
+            level_fitness = self.evaluate_single_level()
+            total_fitness += level_fitness
+            
+        return total_fitness // num_levels
+
+    def evaluate_single_level(self):
+
         lvl = np.random.choice(TRAINING_LEVEL_LIST)
         env_id = f'SuperMarioBros-{lvl}-v1'
-        self.env = gym.make(env_id)
-        self.env = customReward(self.env)
-        #self.env = ExploreGo(self.env, exploration_steps=200, explorer=None)
-        self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
+        env = gym.make(env_id)
+        env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
-        net = neat.nn.RecurrentNetwork.create(self.genome, self.config)
+        net = neat.nn.FeedForwardNetwork.create(self.genome, self.config)
 
-        obs = self.env.reset()
-        done = False
-        fitness_total = 0
-        patience = 0
-        max_x_pos = 0
+        try:
+            obs = env.reset()
+            done = False
+            patience = 0
+            max_x_pos = 0
 
-        while done==False:
-            
-            obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
-            screen = cv2.resize(obs, (32, 32))
-            screen = np.ndarray.flatten(screen)
-            #self.env.render()
-            output = net.activate(screen)
-            action = output.index(max(output))
-            
-            obs, reward, done, info = self.env.step(action)
-
-            fitness_total += reward
-
-            if info["x_pos"] > max_x_pos:
+            while not done:
+                obs_processed = self.preprocess_observation(obs)
                 
-                max_x_pos = info["x_pos"]
-                patience = 0
+                output = net.activate(obs_processed)
+                action = output.index(max(output))
+                obs, reward, done, info = env.step(action)
 
-            else:
-                patience += 1
-            
-            if done or patience > 100:
-                break
+                current_x_pos = info.get("x_pos", 0)
+                if current_x_pos > max_x_pos:
+                    max_x_pos = current_x_pos
+                    patience = 0
+                
+                else:
+                    patience += 1
+                
+                if patience > 100:
+                    break
+                    
+                if info.get("flag_get", False):
 
-            if info["flag_get"]:
-                fitness_total += 10000
-                break
+                    fitness_score = max_x_pos + 1000
+                    env.close()
+                    return fitness_score
 
-        return int(fitness_total)
+            fitness_score = max_x_pos
+                
+            env.close()
+            return float(fitness_score)
             
+        except Exception as e:
+
+            print(f"Error en evaluación: {e}")
+            env.close()
+            return 0
+
+    def preprocess_observation(self, obs):
+
+        obs = cv2.cvtColor(obs, cv2.COLOR_BGR2GRAY)
+        screen = cv2.resize(obs, (32, 32))
+        screen = np.ndarray.flatten(screen)
+
+        return screen
             
-        
 def eval_genomes(genome, config):
     
     eval = fitness(genome, config)
@@ -84,21 +103,20 @@ if __name__ == '__main__':
 
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                        'neat-config-feedforward')
+                        'neat-config-feedforward.txt')
 
 
     pop = neat.Population(config)
     pop.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
-    pop.add_reporter(neat.Checkpointer(generation_interval=50))
+    pop.add_reporter(neat.Checkpointer(generation_interval=50, filename_prefix='checkpoints/neat-checkpoint-'))
 
     pe = neat.ParallelEvaluator(multiprocessing.cpu_count()-1, eval_genomes)
 
     winner = pop.run(pe.evaluate, 200)
 
-    visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg")
-    visualize.plot_species(stats, view=True, filename="feedforward-speciation.svg")
+    visualize.plot_stats(stats, ylog=True, view=True, filename="feedforward-fitness.svg", smooth_best=True, window_size=10)
 
     with open("winner-feedforward","wb") as filename:
         pickle.dump(winner,filename)

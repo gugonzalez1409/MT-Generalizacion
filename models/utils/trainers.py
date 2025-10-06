@@ -3,6 +3,7 @@ from sb3_contrib import RecurrentPPO
 from ..rainbow.rainbow import Rainbow
 from stable_baselines3 import PPO, DQN
 from ..rainbow.policies import RainbowPolicy
+from .ppo_polices import CustomPolicy
 from ..generalization.ImpalaCNN import ImpalaCNN
 from models.utils.envs import make_single_env, vectorizedEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -35,9 +36,11 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
     if impala: print("Using Impala CNN")
     if explore: print("Using ExploreGo")
 
-    if impala:
+    """    if impala:
         policy_kwargs = dict(
             features_extractor_class=ImpalaCNN,
+            share_features_extractor=False,
+            #net_arch=[],
             features_extractor_kwargs=dict(
                 features_dim=512,
                 depths=[32, 64, 64],
@@ -46,12 +49,14 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         )
 
     else:
-        policy_kwargs = {}
+        policy_kwargs = dict()"""
+
+    policy_kwargs = dict()
 
     model = PPO(
-        'CnnPolicy',
-        learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
-        env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom),
+        CustomPolicy if impala else 'CnnPolicy',
+        learning_rate=linear_schedule(2.5e-4 if impala else 1.5e-4),
+        env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom, icm),
         policy_kwargs=policy_kwargs,
         n_steps=512,
         batch_size=256,
@@ -64,11 +69,14 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
         )
+    
+    print("model policy: ", model.policy)
+
 
     save_freq = max(10e6 // 11, 1)
 
     save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='PPO_checkpoint', verbose=1) 
-    model.learn(total_timesteps=75e6, callback=save_callback)
+    model.learn(total_timesteps=150e6, callback=save_callback)
 
 
     model_name = 'PPO'
@@ -148,7 +156,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
 
     
 
-    recurrent = True
+    recurrent = False
 
     if impala:
         policy_kwargs = dict(
@@ -170,7 +178,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
     model = RecurrentPPO(
         'CnnLstmPolicy',
         learning_rate=linear_schedule(1.75e-4 if impala else 1e-4),
-        env = vectorizedEnv(explore, random, custom, icm, recurrent) if vectorized else make_single_env(explore, random, custom),
+        env = vectorizedEnv(explore, random, custom, icm, recurrent) if vectorized else make_single_env(explore, random, custom, icm),
         policy_kwargs=policy_kwargs,
         n_steps=512,
         batch_size=256,
@@ -179,7 +187,7 @@ def trainRecurrentPPO(explore, random, custom, vectorized, impala, icm):
         gamma=0.99,
         gae_lambda=0.95,
         verbose=1,
-        n_epochs=4,
+        n_epochs=3,
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
     )
@@ -224,7 +232,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
             features_extractor_class=ImpalaCNN,
             features_extractor_kwargs=dict(
                 features_dim=512,
-                depths=[16, 32, 32],
+                depths=[32, 64, 64],
                 scale=1
             )
         )
@@ -244,7 +252,7 @@ def trainRainbow(explore, random, custom, vectorized, impala, icm):
     model = Rainbow(
         RainbowPolicy,
         env = vectorizedEnv(explore, random, custom, icm) if vectorized else make_single_env(explore, random, custom, icm=False),
-        learning_rate=linear_schedule(5e-5 if impala else 1e-4),
+        learning_rate=linear_schedule(2.5e-4 if impala else 1e-4),
         learning_starts=10000,
         policy_kwargs=policy_kwargs,
         buffer_size=100000,
