@@ -9,7 +9,7 @@ from ..generalization.ExploreGoVec import ExploreGoVec
 from ..generalization.DomainRand import DomainRandom
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from stable_baselines3.common.atari_wrappers import MaxAndSkipEnv, WarpFrame
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv, VecMonitor, VecNormalize
 
 tensorboard_log = r'./models/statistics/tensorboard_log/'
 log_dir = r'./models/statistics/log_dir/'
@@ -75,5 +75,7 @@ def vectorizedEnv(explore, random, custom, icm = False, recurrent = False):
     if not recurrent:
         env = VecFrameStack(env, n_stack=4, channels_order='last')
     env = LevelMonitor(env)
+
+    env = VecNormalize(env, norm_obs=False)
 
     return env

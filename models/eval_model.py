@@ -67,10 +67,12 @@ path = 'models/RDQN_explore_random_impala_mario.zip'
 model = Rainbow.load(path)
 
 
-levels = [f"SuperMarioBros-{lvl}-v1" for lvl in TRAINING_LEVEL_LIST]
-keys = EVALUATION_LEVEL_LIST.copy()
+### evaluacion en niveles de entrenamiento
 
-csv_filename = 'RainbowIMPALAEXPLORE_evaluation.csv'
+levels = [f"SuperMarioBros-{lvl}-v1" for lvl in TRAINING_LEVEL_LIST]
+keys = TRAINING_LEVEL_LIST.copy()
+
+csv_filename = 'RDQNExploreRandomIMPALAtrain_evaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)
