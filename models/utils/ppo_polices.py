@@ -39,7 +39,7 @@ class CustomPolicy(ActorCriticPolicy):
             features_dim=512
         )
 
-        self.vf_features_extractor = ValueNet(
+        self.vf_features_extractor = ImpalaCNN(
             self.observation_space, 
             features_dim=512,
         )

@@ -61,12 +61,12 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
         n_steps=512,
         batch_size=256,
         clip_range=0.2,
-        ent_coef=0.005,
+        ent_coef=0.03,
         gamma=0.99,
         gae_lambda=0.95,
         verbose=1,
         n_epochs=3,
-        vf_coef=1.0,
+        vf_coef=0.5,
         max_grad_norm=0.5,
         tensorboard_log = tensorboard_log
         )
@@ -77,7 +77,7 @@ def trainPPO(explore, random, custom, vectorized, impala, icm):
     save_freq = max(10e6 // 11, 1)
 
     save_callback = CheckpointCallback(save_freq=save_freq, save_path=log_dir, name_prefix='PPO_checkpoint', verbose=1) 
-    model.learn(total_timesteps=150e6, callback=save_callback)
+    model.learn(total_timesteps=100e6, callback=save_callback)
 
 
     model_name = 'PPO'

@@ -63,16 +63,16 @@ stageLengthMap = {
     (8, 3): 3664,
 }
 
-path = 'models/RDQN_explore_random_impala_mario.zip'
-model = Rainbow.load(path)
+path = 'models/PPO_random_impala_mario.zip'
+model = PPO.load(path)
 
 
 ### evaluacion en niveles de entrenamiento
 
-levels = [f"SuperMarioBros-{lvl}-v1" for lvl in TRAINING_LEVEL_LIST]
-keys = TRAINING_LEVEL_LIST.copy()
+levels = [f"SuperMarioBros-{lvl}-v1" for lvl in EVALUATION_LEVEL_LIST]
+keys = EVALUATION_LEVEL_LIST.copy()
 
-csv_filename = 'RDQNExploreRandomIMPALAtrain_evaluation.csv'
+csv_filename = 'PPORandomIMPALAtrain_evaluation.csv'
 
 with open(csv_filename, 'w') as file:
     writer = csv.writer(file)

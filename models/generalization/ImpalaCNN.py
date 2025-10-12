@@ -53,7 +53,7 @@ class ConvSequence(nn.Module):
 
 class ImpalaCNN(BaseFeaturesExtractor):
 
-    def __init__(self, observation_spaces: gym.spaces.Box, features_dim = 512, depths=[16, 32, 32], scale = 1):
+    def __init__(self, observation_spaces: gym.spaces.Box, features_dim = 512, depths=[32, 64, 64], scale = 1):
 
         super().__init__(observation_spaces, features_dim=features_dim)
         
